@@ -1,0 +1,25 @@
+{
+  "name": "lifecycle-testing-framework",
+  "version": "1.0.0",
+  "description": "A Jest-like testing framework for testing lifecycles.",
+  "main": "index.js",
+  "scripts": {
+    "build": "tsc",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/p-sun/lifecycle-testing-framework.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/p-sun/lifecycle-testing-framework/issues"
+  },
+  "homepage": "https://github.com/p-sun/lifecycle-testing-framework#readme",
+  "devDependencies": {
+    "@types/node": "^18.11.9",
+    "typescript": "^4.9.3"
+  }
+}
