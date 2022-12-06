@@ -1,0 +1,5 @@
+{
+  "testName": "testOneEventInOneFrame",
+  "startTestStr": "<align=left>TEST [[testOneEventInOneFrame]] ========<br><br>",
+  "firstFrameStr": "FIRST FRAME --------<br><color=#0f0>COUNT [myEventA] : 1</color><br><br>START EVENT: [myEventA]<br>myKey1 : myValue1"
+}
