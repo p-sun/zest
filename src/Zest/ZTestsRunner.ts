@@ -1,8 +1,7 @@
-import IZTest, { TestResult } from './IZTest'
-import { createZestTest } from './ZTest'
+import ZTest, { createZestTest, TestResult } from './ZTest'
 
-export class TestsHolder {
-  tests: { [testName: string]: IZTest } = {}
+export class ZTestsRunner {
+  tests: { [testName: string]: ZTest } = {}
   currentTestName?: string
   needsUpdate = false
 
@@ -24,7 +23,7 @@ export class TestsHolder {
   //   return this.currentTestName ? this.tests[this.currentTestName] : undefined
   // }
 
-  getTest(testName: string): IZTest | undefined {
+  getTest(testName: string): ZTest | undefined {
     this.needsUpdate = true
     return this.tests[testName]
   }

@@ -1,15 +1,14 @@
-import IZTest, { TestResult } from '../IZTest'
-import { createZestTest } from '../ZTest'
-import { AllJestTestNames, JestConfigForName } from './ZTestExamples'
+import ZTest, { createZestTest } from '../ZTest'
+import { JestTestName, JestConfigForName } from './ZTestExamples'
 
-const runJestTest = (testName: AllJestTestNames) => {
+const runJestTest = (testName: JestTestName) => {
   const config = JestConfigForName(testName)
   describe(config.describe, () => {
     it(config.it, () => {
-      const zestTest: IZTest = createZestTest(testName)
+      const zestTest: ZTest = createZestTest(testName)
 
       // let count = 0
-      // zestTest.listenToResults((testResult: TestResult) => {
+      // zestTest.addResultListener((testResult: TestResult) => {
       //   // config.updateResultsFn(count++, testResult)
       // })
       config.runZestTest(zestTest, true)
@@ -27,7 +26,7 @@ const runJestTest = (testName: AllJestTestNames) => {
   })
 }
 
-runJestTest('testTwoEventsInOneFrame')
+runJestTest('testTwoEventsInFrame0')
 
 // Object.entries(allJestTests).forEach(([key, jestTestConfig]) => {
 //   runJestTest(key, jestTestConfig)

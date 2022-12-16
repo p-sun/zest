@@ -1,49 +1,180 @@
 import { Vec3 } from '../../HorizonShim/HZShim'
-import IZTest, { TestResult } from '../IZTest'
-import { TestsHolder } from '../TestsHolder'
-import { createZestTest } from '../ZTest'
+import ZTest, { createZestTest, TestResult } from '../ZTest'
+import { ZTestsRunner } from '../ZTestsRunner'
 
 export type JestTestConfig = {
   describe: string
   it: string
-  runZestTest: (test: IZTest, runJest: boolean) => void
+  runZestTest: (test: ZTest, runJest: boolean) => void
 }
 
 export const allJestConfigs = {
-  testTwoEventsInOneFrame: {
-    describe: 'when two events occur in one frame',
-    it: 'should fail ZTest',
-    runZestTest: (test: IZTest, runJest: boolean) => {
-      test.expectEvent('myEventA')
+  testExpectEvent_3startEvent_noExpects: {
+    describe: 'when receiving 3 events, with no expectations',
+    it: 'should fail 3 events',
+    runZestTest: (test: ZTest, runJest: boolean) => {
+      test.startEvent('myEventA')
+      test.startEvent('myEventB')
+      test.startEvent('myEventC')
+      test.finishFrame()
+    },
+  },
+
+  testExpectEvent_3expects_noStartEvents: {
+    describe: 'when receiving 3 events, with no expectations',
+    it: 'should fail 3 events',
+    runZestTest: (test: ZTest, runJest: boolean) => {
+      test.expectEventOnce('myEventA')
+      test.expectEventOnce('myEventB')
+      test.expectEventOnce('myEventC')
+
+      test.finishTest()
+    },
+  },
+
+  testExpectEvent_expectAB_gotEventAB: {
+    describe: 'when expecting event A-B, and recieving event A-B',
+    it: 'should pass both events',
+    runZestTest: (test: ZTest, runJest: boolean) => {
+      test.expectEventOnce('myEventA')
+      test.expectEventOnce('myEventB')
+      test.startEvent('myEventA')
+      test.startEvent('myEventB')
+
+      test.finishTest()
+    },
+  },
+
+  testExpectEvent_expectAA_gotEventAA: {
+    describe: 'when expecting event A-B, and recieving event A-B',
+    it: 'should pass both events',
+    runZestTest: (test: ZTest, runJest: boolean) => {
+      test.expectEventOnce('myEventA')
+      test.expectEventOnce('myEventA')
       test.startEvent('myEventA')
       test.startEvent('myEventA')
 
-      const testResult = test.finishFrame()
-      if (runJest) {
-        expect(testResult).toMatchObject({
-          testName: 'testTwoEventsInOneFra',
-          firstFrameStr:
-            'FIRST FRAME --------<br><color=#f00>EXPECTED COUNT [myEventA] : 1<br>ACTUAL COUNT [myEventA] : 2</color><br><br>START EVENT: [myEventA]<br><br>START EVENT: [myEventA]',
-          lastFrameStr: undefined,
-        })
-      }
+      test.finishTest()
     },
   },
-  testExpectThreeEventsToOccur: {
-    describe: 'when',
-    it: 'should',
-    runZestTest: (test: IZTest, runJest: boolean) => {
-      test.expectEventNTimes('myEventA', 3)
-      test.startEvent('myEventA')
-      test.startEvent('myEventA')
-      test.startEvent('myEventA')
+
+  testExpectEvent_expectAB_gotEventCD: {
+    describe: 'when expecting event A-B, and recieving event C-D',
+    it: 'should pass events',
+    runZestTest: (test: ZTest, runJest: boolean) => {
+      test.expectEventOnce('myEventA')
+      test.expectEventOnce('myEventB')
+      test.startEvent('myEventC')
+      test.startEvent('myEventD')
+
+      test.finishTest()
     },
   },
-  testExpectThreeEventsToOccur_MultiFrameFail: {
+
+  testExpectEvent_expectBeforeStartEvent: {
+    describe: 'when expecting 1 event, but get 2 in one frame',
+    it: 'should fail when second event is received',
+    runZestTest: (test: ZTest, runJest: boolean) => {
+      test.expectEventOnce('myEventA')
+      test.startEvent('myEventA')
+      test.startEvent('myEventB')
+
+      test.finishFrame()
+    },
+  },
+
+  testExpectEvent_expectBeforeStartEvent_newFrame: {
+    describe: 'when expectEvent is on frame 0, and startEvent on frame 2 & 3',
+    it: 'should fail both startEvents on frame 2 & 3',
+    runZestTest: (test: ZTest, runJest: boolean) => {
+      test.expectEventOnce('myEventA')
+      test.finishFrame() // Finish frame 1
+
+      test.finishFrame() // Finish frame 2
+
+      test.startEvent('myEventA')
+      test.finishFrame() // Finish frame 3
+
+      test.startEvent('myEventB')
+      test.finishFrame()
+    },
+  },
+
+  testExpectEvent_expectAfterStartEvent: {
+    describe: 'when expectEvent is after 2 startEvents',
+    it: 'should fail both startEvents',
+    runZestTest: (test: ZTest, runJest: boolean) => {
+      test.startEvent('myEventA')
+      test.startEvent('myEventB')
+      test.expectEventOnce('myEventA')
+      test.finishFrame()
+    },
+  },
+
+  testExpectEvent_finishTest_newFrame: {
+    describe: 'when finishTest is called with unfinished expects on frame 3',
+    it: 'should fail expectations on frame 3',
+    runZestTest: (test: ZTest, runJest: boolean) => {
+      test.expectEventOnce('myEventA')
+      test.expectEventOnce('myEventB')
+      test.finishFrame() // finish frame 0
+      test.finishFrame() // finish frame 1
+      test.finishFrame() // finish frame 2
+
+      test.finishTest() // on frame 3
+    },
+  },
+
+  testExpectEvent_expectABC_getAB: {
+    describe: 'when expecting events A-B-C, but only got A-B',
+    it: 'should fail on startEvent B',
+    runZestTest: (test: ZTest, runJest: boolean) => {
+      test.expectEventOnce('myEventA')
+      test.expectEventOnce('myEventB')
+      test.expectEventOnce('myEventC')
+
+      test.startEvent('myEventA')
+      test.startEvent('myEventB')
+
+      test.finishTest()
+    },
+  },
+
+  testExpectEvent_expectABC_getAC: {
+    describe: 'when expecting events A-B-C, but only got A-C',
+    it: 'should fail on startEvent B',
+    runZestTest: (test: ZTest, runJest: boolean) => {
+      test.expectEventOnce('myEventA')
+      test.expectEventOnce('myEventB')
+      test.expectEventOnce('myEventC')
+
+      test.startEvent('myEventA')
+      test.startEvent('myEventC')
+
+      test.finishTest()
+    },
+  },
+
+  testExpectEvent_expectABC_getAC_diffOrder: {
+    describe: 'when expecting events A-B-C, but only got A-C, with diff order',
+    it: 'should fail on startEvent B',
+    runZestTest: (test: ZTest, runJest: boolean) => {
+      test.expectEventOnce('myEventA')
+      test.expectEventOnce('myEventB')
+
+      test.startEvent('myEventA')
+
+      test.expectEventOnce('myEventC')
+      test.startEvent('myEventC')
+
+      test.finishTest()
+    },
+  },
+
+  testAppendData: {
     describe: 'when',
     it: 'should',
-    runZestTest: (test: IZTest, runJest: boolean) => {
-      test.expectEventNTimes('myEventA', 3)
+    runZestTest: (test: ZTest, runJest: boolean) => {
       test.startEvent('myEventA')
       test.appendData('myKey1', 'myValue1')
       test.startEvent('myEventA')
@@ -60,28 +191,24 @@ export const allJestConfigs = {
 
       test.finishFrame()
     },
-    expectedTestResult: {
-      firstFrameStr: '',
-      lastFrameStr: undefined,
-    },
   },
   template: {
     describe: 'when',
     it: 'should',
-    runZestTest: (test: IZTest, runJest: boolean) => {},
+    runZestTest: (test: ZTest, runJest: boolean) => {},
   },
 }
 
 const AllJestTestsTypeChecker: { [key: string]: JestTestConfig } =
   allJestConfigs
 
-export type AllJestTestNames = keyof typeof allJestConfigs
-export const JestConfigForName = (name: AllJestTestNames) =>
-  allJestConfigs[name]
+export const allJestTestNames = Object.keys(allJestConfigs) as JestTestName[]
+export type JestTestName = keyof typeof allJestConfigs
+export const JestConfigForName = (name: JestTestName) => allJestConfigs[name]
 
 function testExpectThreeEventsToOccur_MultiFrameFail() {
-  const test: IZTest = createZestTest('testExpectThreeEventsToOccur_Success')
-  test.expectEventNTimes('myEventA', 3)
+  const test: ZTest = createZestTest('testExpectThreeEventsToOccur_Success')
+  // test.expectEventNTimes('myEventA', 3)
   test.startEvent('myEventA')
   test.appendData('myKey1', 'myValue1')
   test.startEvent('myEventA')
@@ -104,7 +231,7 @@ function testExpectThreeEventsToOccur_MultiFrameFail() {
 }
 
 function testOneEventInOneFrame() {
-  const test: IZTest = createZestTest('testOneEventInOneFrame')
+  const test: ZTest = createZestTest('testOneEventInOneFrame')
   test.startEvent('myEventA')
   test.appendData('myKey1', 'myValue1')
   // test.finishFrame((testResult) => {
@@ -113,7 +240,7 @@ function testOneEventInOneFrame() {
 }
 
 function testExpectStringEquality() {
-  const test: IZTest = createZestTest('testExpectStringEquality')
+  const test: ZTest = createZestTest('testExpectStringEquality')
   test.startEvent('myEventAA')
 
   test.expectEqual('myKey', 'myStringAA', 'myStringAA')
@@ -125,7 +252,7 @@ function testExpectStringEquality() {
 }
 
 function testExpectNonZeroEquality_MultiFrame() {
-  const test: IZTest = createZestTest('testExpectNonZeroEquality_MultiFrame')
+  const test: ZTest = createZestTest('testExpectNonZeroEquality_MultiFrame')
   test.startEvent('myEventAA')
 
   test.expectNotZeroOrEmpty('notZeroKey', 'notZeroStr')
@@ -160,7 +287,7 @@ function testExpectNonZeroEquality_MultiFrame() {
 }
 
 function testNewTestWithDataAppendsOnly() {
-  let library = new TestsHolder()
+  let library = new ZTestsRunner()
   const testA = 'NewTestA'
   library.startTest(testA)
 
@@ -178,7 +305,7 @@ function testNewTestWithDataAppendsOnly() {
 }
 
 function testNewMultiTests_WithDataAppendsOnly() {
-  let library = new TestsHolder()
+  let library = new ZTestsRunner()
   const testA = 'NewTestA'
   const testB = 'NewTestB'
 
@@ -202,7 +329,7 @@ function testNewMultiTests_WithDataAppendsOnly() {
 }
 
 function testNewMultiTests_TestBHasOnlyOneFrame() {
-  let library = new TestsHolder()
+  let library = new ZTestsRunner()
   const testA = 'NewTestA'
   const testB = 'NewTestB'
 
@@ -233,7 +360,7 @@ function testNewMultiTests_TestBHasOnlyOneFrame() {
 }
 
 function testEmptyStartTest() {
-  let library = new TestsHolder()
+  let library = new ZTestsRunner()
   const test = 'NewEmptyTest'
   library.startTest(test)
 
@@ -241,44 +368,3 @@ function testEmptyStartTest() {
     // displayTextOnHTML(result)
   })
 }
-
-function testGetResultsAfterEmptyStartTest() {
-  let library = new TestsHolder()
-  const test = 'testGetResultsAfterEmptyStartTest'
-  library.startTest(test)
-
-  let firstFrameResults: TestResult | undefined
-
-  library.finishFrame((result) => {
-    firstFrameResults = result
-    // displayTextOnHTML(result)
-  })
-
-  const resultFromGetter = library.getTest(test)?.testResult
-  if (resultFromGetter?.firstFrameStr != firstFrameResults?.firstFrameStr) {
-    console.error('EXPECTED : ' + (firstFrameResults?.firstFrameStr ?? ''))
-    console.error('BUT GOT : ' + (resultFromGetter?.firstFrameStr ?? ''))
-  }
-  if (resultFromGetter) {
-    // displayTextOnHTML(resultFromGetter)
-  }
-}
-
-// HTML HELPERS --------------------------
-
-// RUN TESTS ----------------------------------
-// testOneEventInOneFrame()
-// testTwoEventsInOneFrame()
-// testTwoEventsInOneFrame_WithData()
-
-// testExpectThreeEventsToOccur()
-// testExpectThreeEventsToOccur_MultiFrameFail()
-// testExpectStringEquality()
-// testExpectNonZeroEquality_MultiFrame()
-
-// testNewTestWithDataAppendsOnly()
-// testNewMultiTests_WithDataAppendsOnly()
-// testNewMultiTests_TestBHasOnlyOneFrame()
-
-// testEmptyStartTest()
-// testGetResultsAfterEmptyStartTest()
