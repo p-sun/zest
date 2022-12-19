@@ -5,6 +5,7 @@ export function createZestTest(testName: string): ZTest {
   return new ZTestImpl(testName)
 }
 
+export type EventName = string
 export default interface ZTest {
   readonly testId: string
 
@@ -29,8 +30,6 @@ export default interface ZTest {
   warnNotEmpty: (key: string, value: string | number | Vec3) => void
 }
 
-export type EventName = string
-
 export type ZTestStatus =
   | { done: false; passStatus: 'RUNNING' | 'FAIL' | 'INVALID' }
   | { done: true; passStatus: 'PASS' | 'FAIL' | 'INVALID' }
@@ -41,8 +40,4 @@ export class ZTestResult {
     readonly status: ZTestStatus,
     readonly text: string
   ) {}
-
-  // clone() {
-  //   return new ZTestResult(this.testName, this.testId, this.status, this.text)
-  // }
 }

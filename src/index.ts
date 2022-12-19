@@ -29,7 +29,7 @@ function displayButtonsOn<T extends string>(
 function diplayTestResultOn(
   element: Element,
   prependString: string,
-  result: ZTestResult
+  testResult: ZTestResult
 ) {
   function replaceColorsForHTML(text?: string): string {
     return (text ?? '')
@@ -45,7 +45,7 @@ function diplayTestResultOn(
   }
 
   element.innerHTML = prependString
-  element.innerHTML += '<br><br>' + replaceColorsForHTML(result.text)
+  element.innerHTML += '<br><br>' + replaceColorsForHTML(testResult.text)
 }
 
 class Main {

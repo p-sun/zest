@@ -324,17 +324,15 @@ export const allJestConfigs = {
     it: 'Should succeed test',
     runZestTest: (test: ZTest, runJest: boolean) => {
       let result: ZTestResult | null
+      test.finishTestWithDelay(0.8)
+
       test.expectEvent('TriggerEnter')
       test.expectEvent('TriggerExit')
-      test.finishTestWithDelay(0.8)
       result = test.finishFrame()
 
       test.startEvent('TriggerEnter')
       test.startEvent('TriggerExit')
       result = test.finishFrame()
-      if (runJest) {
-        expect(result).not.toBeUndefined()
-      }
     },
   },
 
@@ -343,9 +341,10 @@ export const allJestConfigs = {
     it: 'Should fail test',
     runZestTest: (test: ZTest, runJest: boolean) => {
       let result: ZTestResult | null
+      test.finishTestWithDelay(0.8)
+
       test.expectEvent('TriggerEnter')
       test.expectEvent('TriggerExit')
-      test.finishTestWithDelay(0.8)
       result = test.finishFrame()
 
       test.startEvent('TriggerExit')
@@ -377,9 +376,9 @@ export const allJestConfigs = {
         })
       }
 
+      test.finishTestWithDelay(0.8)
       test.expectEvent('TriggerEnter')
       test.expectEvent('TriggerExit')
-      test.finishTestWithDelay(0.8)
 
       result = test.finishFrame()
       result = test.finishFrame()
@@ -401,10 +400,10 @@ export const allJestConfigs = {
     it: 'Should pass test',
     runZestTest: (test: ZTest, runJest: boolean) => {
       let result: ZTestResult | null
+      test.finishTestWithDelay(0.8)
 
       test.expectEvent('Collision')
       test.startEvent('Collision')
-      test.finishTestWithDelay(0.8)
 
       result = test.finishFrame()
     },

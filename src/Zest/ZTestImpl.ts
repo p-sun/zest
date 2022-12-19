@@ -30,14 +30,14 @@ export default class ZTestImpl implements ZTest {
   private needsUpdate: boolean = true
   private currentFrame = 0
   private instructionsMgr: InstructionsManager
-  private resultsListeners: ((TestResult: ZTestResult) => void)[] = []
+  private resultsListeners: ((testResult: ZTestResult) => void)[] = []
 
-  constructor(tName: string) {
+  constructor(testName: string) {
     this.testId = String(new Date().getTime())
-    this.instructionsMgr = new InstructionsManager(tName)
+    this.instructionsMgr = new InstructionsManager(testName)
     this.instructionsMgr.push({
       functionName: 'startTest',
-      testName: tName,
+      testName,
       frame: this.currentFrame,
     })
   }
@@ -54,7 +54,7 @@ export default class ZTestImpl implements ZTest {
     )
   }
 
-  addResultListener(updateResultsFn: (TestResult: ZTestResult) => void) {
+  addResultListener(updateResultsFn: (testResult: ZTestResult) => void) {
     this.resultsListeners.push(updateResultsFn)
     this.needsUpdate = true
   }
