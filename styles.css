@@ -1,8 +1,11 @@
 /* Colors and Styles */
 
 body {
-  /* background-color: #121416; */
-  background-color: #596fb1;
+  background-color: #2e9bb6;
+}
+
+.container {
+  font-family: Arial, Helvetica, sans-serif;
 }
 
 .testResults {
@@ -10,37 +13,31 @@ body {
   padding: 1em 1em;
   background-color: #02034f;
   color: white;
-  /* background-color: #ffffff; */
 }
 
 .btn-group button {
   border-radius: 10em;
   cursor: pointer;
   text-align: left;
-  /* color: aliceblue; */
   font-family: Arial, Helvetica, sans-serif;
 }
 
 .btn-group .selectedButton {
-  background-color: #9fbaff;
-  /* background-color: #5652d0; */
+  background-color: #a2bcff;
 }
 
 /* Darker color than .selectedButton*/
 .btn-group button.selectedButton:hover {
   background-color: #83a4f7;
-  /* background-color: #3b37af; */
 }
 
 .btn-group button {
   background-color: #e7eeff;
-  /* background-color: #3c3b5a; */
 }
 
 /* Darker color than .button*/
 .btn-group button:hover {
   background-color: #cfdbf8;
-  /* background-color: #3c3b5a; */
 }
 
 /* Layout */
@@ -49,13 +46,11 @@ body {
   display: flex;
   flex-wrap: wrap;
   gap: 1em;
+  padding: 1em;
 }
 
-.container {
-  /* margin: 0px; */
-  /* color: aliceblue; */
-  /* font-size: medium; */
-  font-family: Arial, Helvetica, sans-serif;
+.testResults {
+  width: 30em;
 }
 
 .btn-group {

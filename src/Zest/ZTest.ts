@@ -6,34 +6,32 @@ export function createZestTest(testName: string): ZTest {
 }
 
 export default interface ZTest {
-  get testResult(): TestResult
-  addResultListener: (updateResultsFn: (testResult: TestResult) => void) => void
+  addResultListener: (
+    updateResultsFn: (testResult: ZTestResult) => void
+  ) => void
+  testResult(): ZTestResult
 
   startEvent: (eventName: string) => void
+  expectEvent: (eventName: EventName) => void
+
+  finishFrame(): ZTestResult | null
+  finishTest(): ZTestResult
+
   appendData: (key: string, value: string) => void
-  finishFrame(): TestResult | null
-  finishTest(): TestResult
-
-  expectEventOnce: (eventName: EventName) => void
-
-  expectNotZero: (key: string, n: number) => void
-  warnNotZero: (key: string, n: number) => void
-
-  expectNotZeroVec3: (key: string, vec3: Vec3) => void
-  warnNotZeroVec3: (key: string, vec3: Vec3) => void
-
-  expectNotZeroOrEmpty: (key: string, value: string) => void
-  warnNotZeroOrEmpty: (key: string, value: string) => void
 
   expectEqual: (key: string, actual: string, expected: string) => void
+  expectNotEqual: (key: string, actual: string, expected: string) => void
+
+  expectNotEmpty: (key: string, value: string | number | Vec3) => void
+  warnNotEmpty: (key: string, value: string | number | Vec3) => void
 }
 
 export type EventName = string
 
-export class TestResult {
+export class ZTestResult {
   constructor(public readonly testName: string, readonly text: string) {}
 
   clone() {
-    return new TestResult(this.testName, this.text)
+    return new ZTestResult(this.testName, this.text)
   }
 }

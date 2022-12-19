@@ -1,8 +1,10 @@
 import { Vec3 } from '../HorizonShim/HZShim'
-import ZTest, { EventName, TestResult } from './ZTest'
+import ZTest, { EventName, ZTestResult } from './ZTest'
+import { type } from 'os'
 
-type TextResultColor = 'default' | 'red' | 'green' | 'yellow' | 'grey'
-function WrapTextWithHorizonColorTags(text: string, color: TextResultColor) {
+type LineColor = 'default' | 'red' | 'green' | 'yellow' | 'grey'
+
+function WrapTextWithHorizonColorTags(text: string, color: LineColor) {
   if (!text) {
     return ''
   }
@@ -20,48 +22,213 @@ function WrapTextWithHorizonColorTags(text: string, color: TextResultColor) {
   }
 }
 
+type Frame = number
+
+type TextLine = { text: string; color: LineColor }
+
+export default class ZTestImpl implements ZTest {
+  private needsUpdate: boolean = true
+  private currentFrame = 0
+  private instructionsMgr: InstructionsManager
+  private resultsListeners: ((TestResult: ZTestResult) => void)[] = []
+
+  constructor(tName: string) {
+    this.instructionsMgr = new InstructionsManager(tName)
+    this.instructionsMgr.push({
+      functionName: 'startTest',
+      testName: tName,
+      frame: this.currentFrame,
+    })
+  }
+
+  /* ----------------------------- Get Test Result ---------------------------- */
+
+  testResult(): ZTestResult {
+    return new ZTestResult(
+      this.instructionsMgr.testName,
+      this.instructionsMgr.getHorizonString()
+    )
+  }
+
+  addResultListener(updateResultsFn: (TestResult: ZTestResult) => void) {
+    this.resultsListeners.push(updateResultsFn)
+    this.needsUpdate = true
+  }
+
+  /* --------------------------- Event Expectations --------------------------- */
+
+  expectEvent(eventName: string) {
+    this.instructionsMgr.push({
+      functionName: 'expectEvent',
+      eventName,
+      frame: this.currentFrame,
+    })
+  }
+
+  startEvent(eventName: EventName) {
+    this.needsUpdate = true
+    this.instructionsMgr.push({
+      functionName: 'startEvent',
+      eventName,
+      frame: this.currentFrame,
+    })
+  }
+
+  /* ---------------------------- Public Lifecycle ---------------------------- */
+
+  finishTest(): ZTestResult {
+    this.needsUpdate = true
+    this.instructionsMgr.push({
+      functionName: 'finishTest',
+      frame: this.currentFrame,
+    })
+
+    return this.sendResultToListeners()
+  }
+
+  finishFrame(): ZTestResult | null {
+    this.currentFrame++
+    if (this.needsUpdate) {
+      return this.sendResultToListeners()
+    }
+    return null
+  }
+
+  private sendResultToListeners(): ZTestResult {
+    const results = this.testResult()
+    this.needsUpdate = false
+
+    for (const listener of this.resultsListeners) {
+      listener(results)
+    }
+    return results
+  }
+
+  /* ------------------------------- Append Data ------------------------------ */
+
+  appendData(key: string, value: string) {
+    this.needsUpdate = true
+    this.instructionsMgr.push({
+      functionName: 'appendData',
+      key,
+      value,
+      frame: this.currentFrame,
+    })
+  }
+
+  /* --------------------------- Value Expectations --------------------------- */
+
+  expectEqual(key: string, value: string, expectedVal: string) {
+    this.needsUpdate = true
+    this.instructionsMgr.push({
+      functionName: 'expectEqual',
+      key,
+      value,
+      expectedVal,
+      isWarn: false,
+      frame: this.currentFrame,
+    })
+  }
+
+  expectNotEqual(key: string, value: string, expectedVal: string) {
+    this.needsUpdate = true
+    this.instructionsMgr.push({
+      functionName: 'expectNotEqual',
+      key,
+      value,
+      expectedVal,
+      isWarn: false,
+      frame: this.currentFrame,
+    })
+  }
+
+  expectNotEmpty(key: string, value: string | number | Vec3) {
+    this.needsUpdate = true
+    this.instructionsMgr.push({
+      functionName: 'expectNotEmpty',
+      key,
+      value,
+      frame: this.currentFrame,
+      isWarn: false,
+    })
+  }
+
+  warnNotEmpty(key: string, value: string | number | Vec3) {
+    this.needsUpdate = true
+    this.instructionsMgr.push({
+      functionName: 'expectNotEmpty',
+      key,
+      value,
+      isWarn: true,
+      frame: this.currentFrame,
+    })
+  }
+}
+
 type HasFrame = { frame: Frame }
 
 type Instruction = HasFrame &
   (
     | {
         functionName: 'startTest'
+        testName: string
       }
     | {
         functionName: 'finishTest'
       }
     | {
-        functionName: 'expectEventOnce'
+        functionName: 'expectEvent'
         eventName: EventName
       }
     | {
         functionName: 'startEvent'
         eventName: EventName
       }
+    | {
+        functionName: 'appendData'
+        key: string
+        value: string
+      }
+    | {
+        functionName: 'expectEqual'
+        key: string
+        value: string
+        expectedVal: string
+        isWarn: boolean
+      }
+    | {
+        functionName: 'expectNotEqual'
+        key: string
+        value: string
+        expectedVal: string
+        isWarn: boolean
+      }
+    | {
+        functionName: 'expectNotEmpty'
+        key: string
+        value: string | number | Vec3
+        isWarn: boolean
+      }
   )
 
-type Frame = number
-
-type TextLine = { text: string; color: TextResultColor }
-
-class ExpectationsManager {
+type InstructionsAcc = {
+  expectEventOnceInstrs: (Instruction & {
+    functionName: 'expectEvent'
+  })[]
+}
+class InstructionsManager {
   private instructions: Instruction[] = []
-  readonly testName: string
 
-  constructor(testName: string) {
-    this.testName = testName
-    this.instructions.push({
-      functionName: 'startTest',
-      frame: 0,
-    })
-  }
+  constructor(public readonly testName: string) {}
 
   getHorizonString(): string {
     let str = ''
     let isFirstStr = true
-    let currentColor: TextResultColor = 'default'
+    let currentColor: LineColor = 'default'
     let strForCurrentColor = ''
-    for (const textResult of this.parseTextResults()) {
+    for (const textResult of InstructionsManager.parseTextResults(
+      this.instructions
+    )) {
       const text = (isFirstStr ? '' : '<br>') + textResult.text
       isFirstStr = false
 
@@ -85,347 +252,165 @@ class ExpectationsManager {
     this.instructions.push(instruction)
   }
 
-  startEvent(eventName: EventName, frame: Frame) {
-    this.instructions.push({
-      functionName: 'startEvent',
-      eventName,
-      frame,
-    })
-  }
-
-  finishTest(frame: Frame) {
-    this.instructions.push({
-      functionName: 'finishTest',
-      frame,
-    })
-  }
-
   /* ------------------------------ Parse Results ----------------------------- */
 
-  private textResultForFrame(frame: Frame): TextLine {
-    let text = '--- FRAME ' + frame + ' ---'
-    if (frame !== 0) {
-      text = '<br>' + text
-    }
-    return { text, color: 'grey' }
-  }
+  private static *parseTextResults(
+    instructions: Instruction[]
+  ): Generator<TextLine, void, unknown> {
+    let currentFrame: Frame = -1
+    let accumulator: InstructionsAcc = { expectEventOnceInstrs: [] }
 
-  private *parseTextResults(): Generator<TextLine, void, unknown> {
-    let thisFrame: Frame = -1
-    let expectOnceInstrs: (Instruction & {
-      functionName: 'expectEventOnce'
-    })[] = []
-
-    for (const [i, instr] of this.instructions.entries()) {
-      if (thisFrame !== instr.frame) {
-        thisFrame = instr.frame
-        yield this.textResultForFrame(instr.frame)
+    for (const instr of instructions) {
+      if (currentFrame !== instr.frame) {
+        currentFrame = instr.frame
+        const maybeBreak = currentFrame !== 0 ? '<br>' : ''
+        yield {
+          text: `${maybeBreak}--- FRAME ${currentFrame} ---`,
+          color: 'grey',
+        }
       }
 
-      switch (instr.functionName) {
-        case 'startTest':
-          yield {
-            text: `${instr.functionName}("${this.testName}")`,
-            color: 'default',
-          }
-          break
-        case 'expectEventOnce':
-          yield {
-            text: `${instr.functionName}("${instr.eventName}")`,
-            color: 'default',
-          }
-          expectOnceInstrs.push(instr)
-          break
-        case 'startEvent':
-          const expectOnce = expectOnceInstrs.shift()
-          if (expectOnce) {
-            if (instr.eventName === expectOnce.eventName) {
-              yield {
-                text: `startEvent("${instr.eventName}") | OK: ${expectOnce.functionName}("${expectOnce.eventName}")`,
-                color: 'green',
-              }
-              break
-            } else {
-              yield {
-                text: `startEvent("${instr.eventName}") | EXPECT:  ${expectOnce.functionName}("${expectOnce.eventName}")`,
-                color: 'red',
-              }
-              break
-            }
-          }
+      for (const line of this.parseInstruction(instr, accumulator)) {
+        yield line
+      }
+    }
+  }
 
-          yield {
-            text: `startEvent("${instr.eventName}") | EXPECT: No startEvent()`,
-            color: 'red',
-          }
-          break
-        case 'finishTest':
-          yield {
-            text: `finishTest()`,
-            color: 'default',
-          }
-          if (expectOnceInstrs.length > 0) {
+  private static *parseInstruction(
+    instr: Instruction,
+    acc: InstructionsAcc
+  ): Generator<TextLine, void, unknown> {
+    switch (instr.functionName) {
+      case 'startTest':
+        yield {
+          text: `${instr.functionName}("${instr.testName}")`,
+          color: 'default',
+        }
+        break
+
+      case 'expectEvent':
+        yield {
+          text: `${instr.functionName}("${instr.eventName}")`,
+          color: 'default',
+        }
+
+        acc.expectEventOnceInstrs.push(instr)
+        break
+
+      case 'startEvent':
+        const expectOnce = acc.expectEventOnceInstrs.shift()
+        if (expectOnce) {
+          if (instr.eventName === expectOnce.eventName) {
             yield {
-              text: `.. UNFULFILLED EXPECTS:`,
-              color: 'grey',
+              text: `startEvent("${instr.eventName}") | OK: ${expectOnce.functionName}("${expectOnce.eventName}")`,
+              color: 'green',
             }
-          }
-          for (const expect of expectOnceInstrs) {
+            break
+          } else {
             yield {
-              text: `.... ${expect.functionName}("${expect.eventName}") | GOT: No startEvent()`,
+              text: `startEvent("${instr.eventName}") | EXPECT:  ${expectOnce.functionName}("${expectOnce.eventName}")`,
               color: 'red',
             }
+            break
           }
-          break
-        default:
-          throw new Error(
-            'Instruction Parser not implemented' + JSON.stringify(instr)
+        }
+
+        yield {
+          text: `startEvent("${instr.eventName}") | EXPECT: No startEvent()`,
+          color: 'red',
+        }
+        break
+
+      case 'finishTest':
+        yield {
+          text: `finishTest()`,
+          color: 'default',
+        }
+        if (acc.expectEventOnceInstrs.length > 0) {
+          yield {
+            text: `.. UNFULFILLED EXPECTS:`,
+            color: 'grey',
+          }
+        }
+        for (const expect of acc.expectEventOnceInstrs) {
+          yield {
+            text: `.... ${expect.functionName}("${expect.eventName}") | GOT: No startEvent()`,
+            color: 'red',
+          }
+        }
+        break
+
+      case 'appendData':
+        yield {
+          text: `${instr.key}: ${instr.value}`,
+          color: 'default',
+        }
+        break
+
+      case 'expectEqual':
+        yield this._textLineForEquality(instr)
+        break
+
+      case 'expectNotEqual':
+        yield this._textLineForEquality(instr)
+        break
+
+      case 'expectNotEmpty':
+        {
+          let isExpected = false
+          if (typeof instr.value === 'number') {
+            isExpected = instr.value !== 0
+          } else if (typeof instr.value === 'string') {
+            isExpected = instr.value !== '' && instr.value !== '0'
+          } else if (instr.value instanceof Vec3) {
+            isExpected = !instr.value.equals(Vec3.zero)
+          }
+          yield this._textLine(
+            `${instr.functionName}("${instr.key}", value)`,
+            isExpected,
+            instr.isWarn
           )
-      }
+        }
+        break
+
+      default:
+        throw new Error(
+          'Instruction Parser not implemented' + JSON.stringify(instr)
+        )
     }
   }
-}
 
-type ResultThisFrame = {
-  appendStr: string
-  needsUpdate: boolean
-  expectEventNTimes: { [eventName: EventName]: number }
-  timesEventsOccurred: { [eventName: EventName]: number }
-}
+  static _textLineForEquality(
+    instr: Instruction &
+      ({ functionName: 'expectEqual' } | { functionName: 'expectNotEqual' })
+  ) {
+    const isExpected =
+      instr.functionName === 'expectEqual'
+        ? instr.value === instr.expectedVal
+        : instr.value !== instr.expectedVal
+    const valueIsStr = typeof instr.value === 'string'
+    const valueStr = valueIsStr ? `"${instr.value}"` : `${instr.value}`
+    const expValStr = valueIsStr
+      ? `"${instr.expectedVal}"`
+      : `${instr.expectedVal}`
 
-export default class ZTestImpl implements ZTest {
-  private needsFirstUpdate: boolean
-  private needsUpdate: boolean = false
-
-  private expectationMgr: ExpectationsManager
-
-  private updateResultsFn: ((TestResult: TestResult) => void) | undefined
-  private currentFrame = 0
-
-  constructor(tName: string) {
-    this.expectationMgr = new ExpectationsManager(tName)
-    this.needsFirstUpdate = true
-  }
-
-  addResultListener(updateResultsFn: (TestResult: TestResult) => void) {
-    this.updateResultsFn = updateResultsFn
-  }
-
-  get testResult(): TestResult {
-    return new TestResult(
-      this.expectationMgr.testName,
-      this.expectationMgr.getHorizonString()
+    return this._textLine(
+      `${instr.functionName}("${instr.key}", ${valueStr}, ${expValStr})`,
+      isExpected,
+      instr.isWarn
     )
   }
 
-  /* ---------------------------- Public Lifecycle ---------------------------- */
-
-  startEvent(eventName: EventName) {
-    this.needsUpdate = true
-    this.expectationMgr.startEvent(eventName, this.currentFrame)
-  }
-
-  appendData(key: string, value: string) {
-    this.needsUpdate = true
-  }
-
-  finishTest(): TestResult {
-    this.needsUpdate = true
-    this.expectationMgr.finishTest(this.currentFrame)
-    const results = this.testResult
-    this.updateResultsFn?.(results)
-    return results
-  }
-
-  finishFrame(): TestResult | null {
-    if (this.needsUpdate) {
-      this.needsFirstUpdate = false
-
-      this.currentFrame++
-      const results = this.testResult
-      this.updateResultsFn?.(results)
-      return results
-
-      // If no data was logged last frame, only display the Start Test String
-    } else if (this.needsFirstUpdate) {
-      this.needsFirstUpdate = false
-
-      this.currentFrame++
-      const results = this.testResult
-      this.updateResultsFn?.(results)
-      return results
-    }
-
-    this.currentFrame++
-    return null
-  }
-
-  /* --------------------------- Event Expectations --------------------------- */
-
-  expectEventOnce(eventName: string) {
-    this.expectationMgr.push({
-      functionName: 'expectEventOnce',
-      eventName,
-      frame: this.currentFrame,
-    })
-  }
-
-  /* --------------------------- Value Expectations --------------------------- */
-
-  warnNotZero(key: string, n: number) {
-    // this.thisFrame.needsUpdate = true
-    // this.thisFrame.appendStr += this._colorWarnNotZero({
-    //   isExpected: n != 0,
-    //   key: key,
-    //   actualStr: String(n),
-    //   expectedStr: 'not 0',
-    // })
-  }
-
-  expectNotZero(key: string, n: number) {
-    // this.thisFrame.needsUpdate = true
-    // this.thisFrame.appendStr += this._colorExpectationsNotZero({
-    //   isExpected: n != 0,
-    //   key: key,
-    //   actualStr: String(n),
-    //   expectedStr: 'not 0',
-    // })
-  }
-
-  warnNotZeroVec3(key: string, vec3: Vec3) {
-    // this.thisFrame.needsUpdate = true
-    // this.thisFrame.appendStr += this._colorWarnNotZero({
-    //   isExpected: !vec3.equals(Vec3.zero),
-    //   key: key,
-    //   actualStr: String(vec3),
-    //   expectedStr: 'not Vec3(0, 0, 0)',
-    // })
-  }
-
-  expectNotZeroVec3(key: string, vec3: Vec3) {
-    // this.thisFrame.needsUpdate = true
-    // this.thisFrame.appendStr += this._colorExpectationsNotZero({
-    //   isExpected: !vec3.equals(Vec3.zero),
-    //   key: key,
-    //   actualStr: String(vec3),
-    //   expectedStr: 'not Vec3(0, 0, 0)',
-    // })
-  }
-
-  expectEqual(key: string, actual: string, expected: string) {
-    // this.thisFrame.needsUpdate = true
-    // this.thisFrame.appendStr += this._colorExpectationsNotEqual({
-    //   isExpected: actual === expected,
-    //   key: key,
-    //   actualStr: actual,
-    //   expectedStr: expected,
-    // })
-  }
-
-  expectNotZeroOrEmpty(key: string, value: string) {
-    // this.thisFrame.needsUpdate = true
-    // this.thisFrame.appendStr += this._colorExpectationsNotZero({
-    //   isExpected: value !== '' && value !== '0',
-    //   key: key,
-    //   actualStr: value,
-    //   expectedStr: 'not 0 or empty',
-    // })
-  }
-
-  warnNotZeroOrEmpty(key: string, value: string) {
-    // this.thisFrame.needsUpdate = true
-    // this.thisFrame.appendStr += this._colorExpectationsNotZero({
-    //   isExpected: value !== '' && value !== '0',
-    //   key: key,
-    //   actualStr: value,
-    //   expectedStr: 'not 0 or empty',
-    // })
-  }
-
-  /* ------------------------------ Private Utils ----------------------------- */
-
-  _createNewFrameResult(): ResultThisFrame {
+  static _textLine(
+    text: string,
+    isExpected: boolean,
+    isWarn: boolean
+  ): TextLine {
+    const color = isExpected ? 'green' : isWarn ? 'yellow' : 'red'
+    const status = isExpected ? 'OK' : isWarn ? 'WARN' : 'FAIL'
     return {
-      appendStr: '',
-      needsUpdate: false,
-      expectEventNTimes: {},
-      timesEventsOccurred: {},
+      text: `${text} | ${status}`,
+      color,
     }
-  }
-
-  _colorExpectationsNotZero(param: {
-    isExpected: boolean
-    key: string
-    actualStr: string
-    expectedStr: string
-  }): string {
-    let str: string = '<br>'
-
-    if (param.isExpected) {
-      str += '<color=#0f0>' // Green
-      str += param.key + ' : ' + param.actualStr
-    } else {
-      str += '<color=#f00>' // Red
-      str += 'EXPECTED ' + param.key + ' : ' + param.expectedStr
-    }
-    str += '</color>'
-    return str
-  }
-
-  _colorWarnNotZero(param: {
-    isExpected: boolean
-    key: string
-    actualStr: string
-    expectedStr: string
-  }): string {
-    let str: string = '<br>'
-
-    if (param.isExpected) {
-      str += '<color=#0f0>' // Green
-      str += param.key + ' : ' + param.actualStr
-    } else {
-      str += '<color=#ff0>' // Yellow
-      str += 'WARN EXPECTED ' + param.key + ' : ' + param.expectedStr
-    }
-    str += '</color>'
-    return str
-  }
-
-  _colorExpectationsNotEqual(param: {
-    isExpected: boolean
-    key: string
-    actualStr: string
-    expectedStr: string
-  }): string {
-    let str: string = '<br>'
-
-    if (param.isExpected) {
-      str += '<color=#0f0>' // Green
-    } else {
-      str += '<color=#f00>' // Red
-      str += 'EXPECTED ' + param.key + ' : ' + param.expectedStr
-      str += '<br>ACTUAL '
-    }
-    str += param.key + ' : ' + param.actualStr + '</color>'
-    return str
-  }
-
-  _colorWarnNotEqual(param: {
-    isExpected: boolean
-    key: string
-    actualStr: string
-    expectedStr: string
-  }): string {
-    let str: string = '<br>'
-
-    if (param.isExpected) {
-      str += '<color=#0f0>' // Green
-    } else {
-      str += '<color=#ff0>' // Yellow
-      str += 'WARN EXPECTED ' + param.key + ' : ' + param.expectedStr
-      str += '<br>ACTUAL '
-    }
-    str += param.key + ' : ' + param.actualStr + '</color>'
-    return str
   }
 }

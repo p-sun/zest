@@ -1,4 +1,4 @@
-import { TestResult } from './Zest/ZTest'
+import { ZTestResult } from './Zest/ZTest'
 import { createZestTest } from './Zest/ZTest'
 import {
   JestTestName,
@@ -29,7 +29,7 @@ function displayButtonsOn<T extends string>(
 function diplayTestResultOn(
   element: Element,
   prependString: string,
-  result: TestResult
+  result: ZTestResult
 ) {
   function replaceColorsForHTML(text?: string): string {
     return (text ?? '')
@@ -49,7 +49,7 @@ function diplayTestResultOn(
 }
 
 class Main {
-  private readonly localStorageKey = 'currentName2'
+  private readonly localStorageKey = 'currentName'
   public currentName: JestTestName
 
   constructor(public appRoot: Element, public buttonsGroup: Element) {
@@ -98,7 +98,7 @@ class Main {
     const prependString = jestConfig.describe + '<br>> ' + jestConfig.it
 
     const zestTest = createZestTest(jestTestName)
-    zestTest.addResultListener((testResult: TestResult) => {
+    zestTest.addResultListener((testResult: ZTestResult) => {
       diplayTestResultOn(element, prependString, testResult)
     })
     jestConfig.runZestTest(zestTest, false)

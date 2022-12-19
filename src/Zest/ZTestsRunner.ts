@@ -1,9 +1,9 @@
-import ZTest, { createZestTest, TestResult } from './ZTest'
+import ZTest, { createZestTest, ZTestResult } from './ZTest'
 
 export class ZTestsRunner {
-  tests: { [testName: string]: ZTest } = {}
-  currentTestName?: string
-  needsUpdate = false
+  private tests: { [testName: string]: ZTest } = {}
+  private currentTestName?: string
+  private needsUpdate = false
 
   startTest(testName: string) {
     this.tests[testName] = createZestTest(testName)
@@ -14,25 +14,23 @@ export class ZTestsRunner {
     }
   }
 
-  startEvent(testName: string, eventName: string) {
-    this.needsUpdate = true
-    this.tests[testName]?.startEvent(eventName)
-  }
-
-  // getCurrentTest() : ZTest | undefined {
-  //   return this.currentTestName ? this.tests[this.currentTestName] : undefined
-  // }
-
   getTest(testName: string): ZTest | undefined {
-    this.needsUpdate = true
     return this.tests[testName]
   }
 
-  getTestResults(testName: string): TestResult | undefined {
-    return this.tests[testName].testResult
+  // getCurrentTest(): ZTest | undefined {
+  //   return this.currentTestName ? this.tests[this.currentTestName] : undefined
+  // }
+
+  startEvent(testName: string, eventName: string) {
+    this.tests[testName].startEvent(eventName)
   }
 
-  finishFrame(updateResults: (result: TestResult) => void) {
+  getTestResults(testName: string): ZTestResult | undefined {
+    return this.tests[testName].testResult()
+  }
+
+  finishFrame(updateResults: (result: ZTestResult) => void) {
     if (this.needsUpdate) {
       for (let [testName, test] of Object.entries(this.tests)) {
         const testResult = test.finishFrame()
