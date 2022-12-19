@@ -48,7 +48,6 @@ describe('Test Zest for trigger enter exit, missing trigger enter', () => {
     test.startEvent('OnTriggerExit')
     result = library.finishFrame()
     expect(result).not.toBeNull()
-    console.log(result)
 
     result = library.finishFrame()
     expect(result).toBeNull()

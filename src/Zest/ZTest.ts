@@ -31,7 +31,9 @@ export default interface ZTest {
 
 export type EventName = string
 
-export type ZTestStatus = 'running' | 'pass' | 'fail' | 'invalid'
+export type ZTestStatus =
+  | { done: false; passStatus: 'RUNNING' | 'FAIL' | 'INVALID' }
+  | { done: true; passStatus: 'PASS' | 'FAIL' | 'INVALID' }
 export class ZTestResult {
   constructor(
     readonly testName: string,

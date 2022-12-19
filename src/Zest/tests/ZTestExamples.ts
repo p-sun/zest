@@ -244,11 +244,32 @@ export const allJestConfigs = {
       result = test.finishFrame()
       if (runJest) {
         expect(result).not.toBeNull()
+
+        // To avoid over-updating, only update the resultListeners after a frame is finished.
+        expect(count).toBe(1)
       }
 
       result = test.finishFrame()
       if (runJest) {
         expect(result).toBeNull()
+        expect(count).toBe(1)
+      }
+    },
+  },
+
+  testUpdateResult_onEmptyTest_withFinishTest: {
+    describe: 'when finishTest() is called on an empty test',
+    it: 'should return TestResults on next frame',
+    runZestTest: (test: ZTest, runJest: boolean) => {
+      let count = 0
+      let result: ZTestResult | null
+
+      test.addResultListener((result) => {
+        count++
+      })
+      result = test.finishTest()
+      if (runJest) {
+        expect(count).toBe(1)
       }
     },
   },

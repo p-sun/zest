@@ -45,11 +45,12 @@ export default class ZTestImpl implements ZTest {
   /* ----------------------------- Get Test Result ---------------------------- */
 
   testResult(): ZTestResult {
+    const { text, status } = this.instructionsMgr.getHorizonString()
     return new ZTestResult(
       this.instructionsMgr.testName,
       this.testId,
-      this.instructionsMgr.status,
-      this.instructionsMgr.getHorizonString()
+      status,
+      text
     )
   }
 
@@ -241,6 +242,7 @@ type Instruction = HasFrame &
   )
 
 type InstructionsAcc = {
+  status: ZTestStatus
   expectEventOnceInstrs: (Instruction & {
     functionName: 'expectEvent'
   })[]
@@ -250,29 +252,32 @@ class InstructionsManager {
 
   constructor(public readonly testName: string) {}
 
-  getHorizonString(): string {
+  getHorizonString(): { text: string; status: ZTestStatus } {
     let str = ''
     let isFirstStr = true
     let currentColor: LineColor = 'default'
     let strForCurrentColor = ''
-    for (const textResult of InstructionsManager.parseTextResults(
+
+    const { lines, status } = InstructionsManager.parseLinesForInstructions(
       this.instructions
-    )) {
-      const text = (isFirstStr ? '' : '<br>') + textResult.text
+    )
+
+    for (const line of lines) {
+      const text = (isFirstStr ? '' : '<br>') + line.text
       isFirstStr = false
 
-      if (currentColor === textResult.color) {
+      if (currentColor === line.color) {
         strForCurrentColor += text
       } else {
         str += WrapTextWithHorizonColorTags(strForCurrentColor, currentColor)
-
         strForCurrentColor = text
-        currentColor = textResult.color
+        currentColor = line.color
       }
     }
 
     str += WrapTextWithHorizonColorTags(strForCurrentColor, currentColor)
-    return str
+
+    return { text: str, status: status }
   }
 
   /* ---------------------------- Public Lifecycle ---------------------------- */
@@ -283,29 +288,49 @@ class InstructionsManager {
 
   /* ------------------------------ Parse Results ----------------------------- */
 
-  private static *parseTextResults(
-    instructions: Instruction[]
-  ): Generator<TextLine, void, unknown> {
+  private static parseLinesForInstructions(instructions: Instruction[]): {
+    lines: TextLine[]
+    status: ZTestStatus
+  } {
     let currentFrame: Frame = -1
-    let accumulator: InstructionsAcc = { expectEventOnceInstrs: [] }
+    let accumulator: InstructionsAcc = {
+      status: { done: false, passStatus: 'RUNNING' },
+      expectEventOnceInstrs: [],
+    }
 
+    let lines: TextLine[] = []
     for (const instr of instructions) {
       if (currentFrame !== instr.frame) {
         currentFrame = instr.frame
         const maybeBreak = currentFrame !== 0 ? '<br>' : ''
-        yield {
+        lines.push({
           text: `${maybeBreak}--- FRAME ${currentFrame} ---`,
           color: 'grey',
-        }
+        })
       }
 
-      for (const line of this.parseInstruction(instr, accumulator)) {
-        yield line
-      }
+      lines = lines.concat([
+        ...this.parseLinesForInstruction(instr, accumulator),
+      ])
     }
+
+    const textStatus = 'TEST STATUS: ' + accumulator.status.passStatus + '<br>'
+    const testStatusLine: TextLine = {
+      text: textStatus,
+      color:
+        accumulator.status.passStatus === 'PASS'
+          ? 'green'
+          : accumulator.status.passStatus === 'FAIL'
+          ? 'red'
+          : 'grey',
+    }
+
+    lines.unshift(testStatusLine)
+
+    return { lines, status: accumulator.status }
   }
 
-  private static *parseInstruction(
+  private static *parseLinesForInstruction(
     instr: Instruction,
     acc: InstructionsAcc
   ): Generator<TextLine, void, unknown> {
@@ -340,6 +365,7 @@ class InstructionsManager {
               text: `startEvent("${instr.eventName}") | EXPECT:  ${expectOnce.functionName}("${expectOnce.eventName}")`,
               color: 'red',
             }
+            acc.status = { done: false, passStatus: 'FAIL' }
             break
           }
         }
@@ -348,6 +374,8 @@ class InstructionsManager {
           text: `startEvent("${instr.eventName}") | EXPECT: No startEvent()`,
           color: 'red',
         }
+        acc.status = { done: false, passStatus: 'FAIL' }
+
         break
 
       case 'finishTestWithDelay':
@@ -374,12 +402,17 @@ class InstructionsManager {
             text: `.. UNFULFILLED EXPECTS:`,
             color: 'grey',
           }
-        }
-        for (const expect of acc.expectEventOnceInstrs) {
-          yield {
-            text: `.... ${expect.functionName}("${expect.eventName}") | GOT: No startEvent()`,
-            color: 'red',
+          for (const expect of acc.expectEventOnceInstrs) {
+            yield {
+              text: `.... ${expect.functionName}("${expect.eventName}") | GOT: No startEvent()`,
+              color: 'red',
+            }
+            acc.status = { done: true, passStatus: 'FAIL' }
           }
+        } else {
+          const finalStatus =
+            acc.status.passStatus === 'RUNNING' ? 'PASS' : acc.status.passStatus
+          acc.status = { done: true, passStatus: finalStatus }
         }
         break
 
@@ -391,11 +424,12 @@ class InstructionsManager {
         break
 
       case 'expectEqual':
-        yield this._textLineForEquality(instr)
-        break
-
       case 'expectNotEqual':
-        yield this._textLineForEquality(instr)
+        const textLine = this._textLineForEquality(instr)
+        if (textLine.color === 'red') {
+          acc.status = { done: false, passStatus: 'FAIL' }
+        }
+        yield textLine
         break
 
       case 'expectNotEmpty':
@@ -413,6 +447,9 @@ class InstructionsManager {
             isExpected,
             instr.isWarn
           )
+          if (!isExpected) {
+            acc.status = { done: false, passStatus: 'FAIL' }
+          }
         }
         break
 
