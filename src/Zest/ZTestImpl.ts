@@ -23,7 +23,7 @@ function WrapTextWithHorizonColorTags(text: string, color: LineColor) {
 
 type Frame = number
 
-type TextLine = { text: string; color: LineColor }
+type ZLine = { text: string; color: LineColor }
 
 export default class ZTestImpl implements ZTest {
   readonly testId: string
@@ -289,7 +289,7 @@ class InstructionsManager {
   /* ------------------------------ Parse Results ----------------------------- */
 
   private static parseLinesForInstructions(instructions: Instruction[]): {
-    lines: TextLine[]
+    lines: ZLine[]
     status: ZTestStatus
   } {
     let currentFrame: Frame = -1
@@ -298,7 +298,7 @@ class InstructionsManager {
       expectEventOnceInstrs: [],
     }
 
-    let lines: TextLine[] = []
+    let lines: ZLine[] = []
     for (const instr of instructions) {
       if (currentFrame !== instr.frame) {
         currentFrame = instr.frame
@@ -315,7 +315,7 @@ class InstructionsManager {
     }
 
     const textStatus = 'TEST STATUS: ' + accumulator.status.passStatus + '<br>'
-    const testStatusLine: TextLine = {
+    const testStatusLine: ZLine = {
       text: textStatus,
       color:
         accumulator.status.passStatus === 'PASS'
@@ -333,7 +333,7 @@ class InstructionsManager {
   private static *parseLinesForInstruction(
     instr: Instruction,
     acc: InstructionsAcc
-  ): Generator<TextLine, void, unknown> {
+  ): Generator<ZLine, void, unknown> {
     switch (instr.functionName) {
       case 'startTest':
         yield {
@@ -425,11 +425,11 @@ class InstructionsManager {
 
       case 'expectEqual':
       case 'expectNotEqual':
-        const textLine = this._textLineForEquality(instr)
-        if (textLine.color === 'red') {
+        const line = this._lineForEquality(instr)
+        if (line.color === 'red') {
           acc.status = { done: false, passStatus: 'FAIL' }
         }
-        yield textLine
+        yield line
         break
 
       case 'expectNotEmpty':
@@ -442,10 +442,10 @@ class InstructionsManager {
           } else if (instr.value instanceof Vec3) {
             isExpected = !instr.value.equals(Vec3.zero)
           }
-          yield this._textLine(
-            `${instr.functionName}("${instr.key}", value)`,
+          yield this._lineForIsExpected(
             isExpected,
-            instr.isWarn
+            instr.isWarn,
+            `${instr.functionName}("${instr.key}", value)`
           )
           if (!isExpected) {
             acc.status = { done: false, passStatus: 'FAIL' }
@@ -460,7 +460,7 @@ class InstructionsManager {
     }
   }
 
-  static _textLineForEquality(
+  static _lineForEquality(
     instr: Instruction &
       ({ functionName: 'expectEqual' } | { functionName: 'expectNotEqual' })
   ) {
@@ -474,18 +474,18 @@ class InstructionsManager {
       ? `"${instr.expectedVal}"`
       : `${instr.expectedVal}`
 
-    return this._textLine(
-      `${instr.functionName}("${instr.key}", ${valueStr}, ${expValStr})`,
+    return this._lineForIsExpected(
       isExpected,
-      instr.isWarn
+      instr.isWarn,
+      `${instr.functionName}("${instr.key}", ${valueStr}, ${expValStr})`
     )
   }
 
-  static _textLine(
-    text: string,
+  static _lineForIsExpected(
     isExpected: boolean,
-    isWarn: boolean
-  ): TextLine {
+    isWarn: boolean,
+    text: string
+  ): ZLine {
     const color = isExpected ? 'green' : isWarn ? 'yellow' : 'red'
     const status = isExpected ? 'OK' : isWarn ? 'WARN' : 'FAIL'
     return {
