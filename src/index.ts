@@ -51,6 +51,7 @@ function diplayTestResultOn(
 class Main {
   private readonly localStorageKey = 'currentName'
   public currentName: JestTestName
+  public currentTestId: string = ''
 
   constructor(public appRoot: Element, public buttonsGroup: Element) {
     const storedName = localStorage.getItem(
@@ -98,8 +99,11 @@ class Main {
     const prependString = jestConfig.describe + '<br>> ' + jestConfig.it
 
     const zestTest = createZestTest(jestTestName)
+    this.currentTestId = zestTest.testId
     zestTest.addResultListener((testResult: ZTestResult) => {
-      diplayTestResultOn(element, prependString, testResult)
+      if (testResult.testId === this.currentTestId) {
+        diplayTestResultOn(element, prependString, testResult)
+      }
     })
     jestConfig.runZestTest(zestTest, false)
   }
@@ -115,14 +119,121 @@ if (!appRoot || !buttonsGroup) {
 
 const main = new Main(appRoot, buttonsGroup)
 document.onkeydown = function (e) {
-  if (!e.repeat) {
-    switch (e.key) {
-      case 'ArrowUp':
-        main.selectPrevious()
-        break
-      case 'ArrowDown':
-        main.selectNext()
-        break
-    }
+  switch (e.key) {
+    case 'ArrowUp':
+      main.selectPrevious()
+      break
+    case 'ArrowDown':
+      main.selectNext()
+      break
   }
 }
+
+ 
+function magic(data: { count: number }) {}
+
+// As expected
+// 'random' does not exist in type '{ count: number; }
+magic({ count: 7, random: 6 })
+
+// const c1: {
+//   count: number
+//   random: number
+// }
+const c1 = { count: 7, random: 6 }
+// const c2: {
+//   readonly count: 7
+//   readonly random: 6
+// }
+const c2 = { count: 7, random: 6 } as const
+magic(c1)
+magic(c2)
+
+// It's true!!!
+type Q6 = { count: number; random: number } extends { count: number }
+  ? true
+  : false
+
+// class Vec2 {
+//   constructor(x: number, y: number) {}
+//   static fromXY(bag: { x: number; y: number }) {
+//     return new Vec2(bag.x, bag.y)
+//   }
+// }
+
+function fromXY(bag: { x: number; y: number }) {}
+
+// Object literal may only specify known properties, 
+// and 'button' does not exist in type '{ x: number; y: number; }'
+const notOk = fromXY({ button: 'left', isDown: true, x: 1000, y: 780 });
+
+const m = { button: 'left', isDown: true, x: 1000, y: 780 };
+const ok = fromXY(m);
+
+type Indexable = {
+  length: number;
+  at: (index: number) => unknown;
+};
+
+function getMiddleValue(provider: Indexable) {
+  return provider.at(Math.floor(provider.length / 2));
+}
+
+const u: Array<number> = null as any;
+
+
+
+type Extends<A, B> = [A] extends [B] ? true : false
+type Answer = number extends number[] ? true : false
+
+type Pair<S, T> = [S, T] // aka. tuple. aka "array with fixed number of 2"
+type NumberBool = Pair<number, boolean>
+const f: NumberBool = [8, true]
+
+type StringToNumberBag = { [key: string]: number }
+type StringToNumberBag2 = Record<string, number>
+
+type Person = {
+  name: string
+  age: number
+  likesDogs: boolean
+}
+
+// type KeysOfPerson = 'name' | 'age' | 'likesDogs'
+type PersonKeys = keyof Person
+
+// type PersonButAllValuesAreNumbers = {
+//   name: number
+//   age: number
+//   likesDogs: number
+// }
+type PersonButAllValuesAreNumbers = {
+  [key in PersonKeys]: number
+}
+
+// type TypeOfLikesDogs = boolean
+type TypeOfLikesDogs = Person['likesDogs']
+
+// Same type as Person
+type Person2 = {
+  [key in PersonKeys]: Person[key]
+}
+
+type PersonKeysWithoutId = keyof Person extends 'id' ? 
+
+// type Thing<A> = A extends number ? 'a' : 'b'
+// // type It = 'a' | 'b'
+// type It = Thing<number | boolean>
+
+// type Thing2<A> = [A] extends [number] ? 'a' : 'b'
+// // type It2 = "b"
+// type It2 = Thing2<number | boolean>
+
+
+// - distribute though thte union types
+
+// type ElementOf<T> = null
+
+// contraint 
+// predicate
+// infer is a keyword than can be used in exteneds predicate

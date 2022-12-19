@@ -6,6 +6,8 @@ export function createZestTest(testName: string): ZTest {
 }
 
 export default interface ZTest {
+  readonly testId: string
+
   addResultListener: (
     updateResultsFn: (testResult: ZTestResult) => void
   ) => void
@@ -16,8 +18,9 @@ export default interface ZTest {
 
   finishFrame(): ZTestResult | null
   finishTest(): ZTestResult
+  finishTestWithDelay: (seconds: number) => void
 
-  appendData: (key: string, value: string) => void
+  logData: (key: string, value: string) => void
 
   expectEqual: (key: string, actual: string, expected: string) => void
   expectNotEqual: (key: string, actual: string, expected: string) => void
@@ -28,10 +31,16 @@ export default interface ZTest {
 
 export type EventName = string
 
+export type ZTestStatus = 'running' | 'pass' | 'fail' | 'invalid'
 export class ZTestResult {
-  constructor(public readonly testName: string, readonly text: string) {}
+  constructor(
+    readonly testName: string,
+    readonly testId: string,
+    readonly status: ZTestStatus,
+    readonly text: string
+  ) {}
 
-  clone() {
-    return new ZTestResult(this.testName, this.text)
-  }
+  // clone() {
+  //   return new ZTestResult(this.testName, this.testId, this.status, this.text)
+  // }
 }

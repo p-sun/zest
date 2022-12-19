@@ -215,14 +215,14 @@ export const allJestConfigs = {
     },
   },
 
-  testAppendData: {
+  testLogData: {
     describe: 'when appending data',
     it: 'should display data',
     runZestTest: (test: ZTest, runJest: boolean) => {
       test.expectEvent('myEventA')
-      test.appendData('myKey1', 'myValue1')
+      test.logData('myKey1', 'myValue1')
       test.startEvent('myEventA')
-      test.appendData('myKey2', 'myValue2')
+      test.logData('myKey2', 'myValue2')
       test.finishFrame()
     },
   },
@@ -297,6 +297,66 @@ export const allJestConfigs = {
       }
     },
   },
+
+  testFinishFrameWDelay_triggerEnterExit_happyPath: {
+    describe: 'Test Zest for trigger enter exit, missing trigger ENTER',
+    it: 'Should succeed test',
+    runZestTest: (test: ZTest, runJest: boolean) => {
+      let result: ZTestResult | null
+      test.expectEvent('TriggerEnter')
+      test.expectEvent('TriggerExit')
+      test.finishTestWithDelay(0.8)
+      result = test.finishFrame()
+
+      test.startEvent('TriggerEnter')
+      test.startEvent('TriggerExit')
+      result = test.finishFrame()
+      if (runJest) {
+        expect(result).not.toBeUndefined()
+      }
+    },
+  },
+
+  testFinishFrameWDelay_triggerEnterExit_missingEnter: {
+    describe: 'Test Zest for trigger enter exit, missing trigger ENTER',
+    it: 'Should fail test',
+    runZestTest: (test: ZTest, runJest: boolean) => {
+      let result: ZTestResult | null
+      test.expectEvent('TriggerEnter')
+      test.expectEvent('TriggerExit')
+      test.finishTestWithDelay(0.8)
+      result = test.finishFrame()
+
+      test.startEvent('TriggerExit')
+      result = test.finishFrame()
+      if (runJest) {
+        expect(result).not.toBeUndefined()
+      }
+    },
+  },
+
+  testFinishFrameWDelay_triggerEnterExit_missingExit: {
+    describe: 'Test Zest for trigger enter exit, missing trigger EXIT',
+    it: 'Should fail test',
+    runZestTest: (test: ZTest, runJest: boolean) => {
+      let result: ZTestResult | null
+      test.expectEvent('TriggerEnter')
+      test.expectEvent('TriggerExit')
+      test.finishTestWithDelay(0.8)
+
+      result = test.finishFrame()
+      result = test.finishFrame()
+      result = test.finishFrame()
+
+      test.startEvent('TriggerEnter')
+      result = test.finishFrame()
+      result = test.finishFrame()
+      result = test.finishFrame()
+      if (runJest) {
+        expect(result).not.toBeUndefined()
+      }
+    },
+  },
 }
 
 // @ts-ignore
@@ -306,86 +366,3 @@ const AllJestTestsTypeChecker: { [key: string]: JestTestConfig } =
 export const allJestTestNames = Object.keys(allJestConfigs) as JestTestName[]
 export type JestTestName = keyof typeof allJestConfigs
 export const JestConfigForName = (name: JestTestName) => allJestConfigs[name]
-
-function testNewTestWithDataAppendsOnly() {
-  let library = new ZTestsRunner()
-  const testA = 'NewTestA'
-  library.startTest(testA)
-
-  library.getTest(testA)?.appendData('keyA', 'valueA')
-  library.getTest(testA)?.appendData('keyB', 'valueB')
-  library.finishFrame((result) => {
-    // displayTextOnHTML(result)
-  })
-
-  library.getTest(testA)?.appendData('keyC', 'valueC')
-  library.getTest(testA)?.appendData('keyD', 'valueD')
-  library.finishFrame((result) => {
-    // displayTextOnHTML(result)
-  })
-}
-
-function testNewMultiTests_WithDataAppendsOnly() {
-  let library = new ZTestsRunner()
-  const testA = 'NewTestA'
-  const testB = 'NewTestB'
-
-  library.startTest(testA)
-  library.startTest(testB)
-
-  library.getTest(testB)?.appendData('keyAAA', 'valueBBB')
-  library.getTest(testA)?.appendData('keyA', 'valueA')
-  library.getTest(testA)?.appendData('keyB', 'valueB')
-  library.finishFrame((result) => {
-    // displayTextOnHTML(result)
-  })
-
-  library.getTest(testA)?.appendData('keyC', 'valueC')
-  library.getTest(testB)?.appendData('keyCCC', 'valueCCC')
-  library.getTest(testA)?.appendData('keyD', 'valueD')
-  library.getTest(testB)?.appendData('keyKKK', 'valueKKK')
-  library.finishFrame((result) => {
-    // displayTextOnHTML(result)
-  })
-}
-
-function testNewMultiTests_TestBHasOnlyOneFrame() {
-  let library = new ZTestsRunner()
-  const testA = 'NewTestA'
-  const testB = 'NewTestB'
-
-  // Most recent 'startTest()' decides the current test
-  library.startTest(testA)
-  library.startTest(testB)
-
-  library.getTest(testA)?.appendData('keyA', 'valueA')
-  library.finishFrame((result) => {
-    // displayTextOnHTML(result)
-  })
-
-  // testB only has one event, so it only displays FIRST FRAME
-  library.getTest(testB)?.appendData('keyKKK', 'valueKKK')
-  library.getTest(testA)?.appendData('keyD', 'valueD')
-  library.finishFrame((result) => {
-    // displayTextOnHTML(result)
-  })
-
-  // Finishing another frame doesn't change testA and testB results
-  library.finishFrame((result) => {
-    // displayTextOnHTML(result)
-  })
-
-  // Display results from any previous test
-  // // displayTextOnHTML(library.getTestResults(testA)!)
-  // // displayTextOnHTML(library.getTestResults(testB)!)
-}
-
-function testEmptyStartTest() {
-  let library = new ZTestsRunner()
-  const test = 'NewEmptyTest'
-  library.startTest(test)
-
-  library.finishFrame((result) => {
-    // displayTextOnHTML(result)
-  })
-}

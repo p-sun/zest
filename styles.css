@@ -1,3 +1,29 @@
+/* Layout */
+
+.container {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1em;
+  padding: 1em;
+}
+
+.testResults {
+  /* width: 30em; */
+}
+
+.btn-group {
+  display: flex;
+  flex-direction: column;
+  gap: 0.6em;
+}
+
+.btn-group button {
+  display: block;
+  width: 100%;
+  border: 0px solid #ffffff;
+  padding: 1em 1.4em;
+}
+
 /* Colors and Styles */
 
 body {
@@ -38,30 +64,4 @@ body {
 /* Darker color than .button*/
 .btn-group button:hover {
   background-color: #cfdbf8;
-}
-
-/* Layout */
-
-.container {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 1em;
-  padding: 1em;
-}
-
-.testResults {
-  width: 30em;
-}
-
-.btn-group {
-  display: flex;
-  flex-direction: column;
-  gap: 0.6em;
-}
-
-.btn-group button {
-  display: block;
-  width: 100%;
-  border: 0px solid #ffffff;
-  padding: 1em 1.4em;
 }

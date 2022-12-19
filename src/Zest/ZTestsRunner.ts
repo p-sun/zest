@@ -2,43 +2,65 @@ import ZTest, { createZestTest, ZTestResult } from './ZTest'
 
 export class ZTestsRunner {
   private tests: { [testName: string]: ZTest } = {}
-  private currentTestName?: string
-  private needsUpdate = false
+  private currentTestData:
+    | {
+        testName: string
+        testId: string
+      }
+    | undefined
 
-  startTest(testName: string) {
-    this.tests[testName] = createZestTest(testName)
+  /* ---------------------------- Choose Which Test --------------------------- */
 
-    if (this.currentTestName !== testName) {
-      this.needsUpdate = true
-      this.currentTestName = testName
+  startTest(testName: string): ZTest {
+    const test = createZestTest(testName)
+    test.addResultListener((testResults) => {
+      this.updateResultsForTest(testResults)
+    })
+    this.tests[testName] = test
+    if (!this.getCurrentTest()) {
+      this.currentTestData = { testName, testId: test.testId }
     }
+    return test
   }
 
   getTest(testName: string): ZTest | undefined {
     return this.tests[testName]
   }
 
-  // getCurrentTest(): ZTest | undefined {
-  //   return this.currentTestName ? this.tests[this.currentTestName] : undefined
-  // }
-
-  startEvent(testName: string, eventName: string) {
-    this.tests[testName].startEvent(eventName)
+  setCurrentTest(testName: string): ZTest | undefined {
+    const test = this.getTest(testName)
+    if (test) {
+      this.currentTestData = { testName, testId: test.testId }
+      return test
+    } else {
+      console.error(
+        `ERROR: setCurrentTest called on non-existant test: ${testName}`
+      )
+    }
   }
+
+  getCurrentTest(): ZTest | undefined {
+    const testName = this.currentTestData?.testName
+    return testName ? this.tests[testName] : undefined
+  }
+
+  /* ------------------------------ Test Results ------------------------------ */
 
   getTestResults(testName: string): ZTestResult | undefined {
     return this.tests[testName].testResult()
   }
 
-  finishFrame(updateResults: (result: ZTestResult) => void) {
-    if (this.needsUpdate) {
-      for (let [testName, test] of Object.entries(this.tests)) {
-        const testResult = test.finishFrame()
-        if (testResult && this.currentTestName === testName) {
-          updateResults(Object.assign({}, testResult))
-        }
+  private updateResultsForTest(testResults: ZTestResult) {}
+
+  /* -------------------------------- Lifecycle ------------------------------- */
+
+  finishFrame(): ZTestResult | null {
+    for (const [testName, test] of Object.entries(this.tests)) {
+      const testResult = test.finishFrame()
+      if (testResult && testResult.testId === this.currentTestData?.testId) {
+        return testResult
       }
-      this.needsUpdate = false
     }
+    return null
   }
 }

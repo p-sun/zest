@@ -1,6 +1,5 @@
 import { Vec3 } from '../HorizonShim/HZShim'
-import ZTest, { EventName, ZTestResult } from './ZTest'
-import { type } from 'os'
+import ZTest, { EventName, ZTestResult, ZTestStatus } from './ZTest'
 
 type LineColor = 'default' | 'red' | 'green' | 'yellow' | 'grey'
 
@@ -27,12 +26,14 @@ type Frame = number
 type TextLine = { text: string; color: LineColor }
 
 export default class ZTestImpl implements ZTest {
+  readonly testId: string
   private needsUpdate: boolean = true
   private currentFrame = 0
   private instructionsMgr: InstructionsManager
   private resultsListeners: ((TestResult: ZTestResult) => void)[] = []
 
   constructor(tName: string) {
+    this.testId = String(new Date().getTime())
     this.instructionsMgr = new InstructionsManager(tName)
     this.instructionsMgr.push({
       functionName: 'startTest',
@@ -46,6 +47,8 @@ export default class ZTestImpl implements ZTest {
   testResult(): ZTestResult {
     return new ZTestResult(
       this.instructionsMgr.testName,
+      this.testId,
+      this.instructionsMgr.status,
       this.instructionsMgr.getHorizonString()
     )
   }
@@ -86,6 +89,24 @@ export default class ZTestImpl implements ZTest {
     return this.sendResultToListeners()
   }
 
+  finishTestWithDelay(seconds: number) {
+    this.instructionsMgr.push({
+      functionName: 'finishTestWithDelay',
+      seconds,
+      frame: this.currentFrame,
+    })
+
+    setTimeout(() => {
+      this.needsUpdate = true
+      this.instructionsMgr.push({
+        functionName: 'finishTestWithDelayCallback',
+        seconds,
+        frame: this.currentFrame,
+      })
+      this.sendResultToListeners()
+    }, seconds * 1000)
+  }
+
   finishFrame(): ZTestResult | null {
     this.currentFrame++
     if (this.needsUpdate) {
@@ -106,10 +127,10 @@ export default class ZTestImpl implements ZTest {
 
   /* ------------------------------- Append Data ------------------------------ */
 
-  appendData(key: string, value: string) {
+  logData(key: string, value: string) {
     this.needsUpdate = true
     this.instructionsMgr.push({
-      functionName: 'appendData',
+      functionName: 'logData',
       key,
       value,
       frame: this.currentFrame,
@@ -177,6 +198,14 @@ type Instruction = HasFrame &
         functionName: 'finishTest'
       }
     | {
+        functionName: 'finishTestWithDelay'
+        seconds: number
+      }
+    | {
+        functionName: 'finishTestWithDelayCallback'
+        seconds: number
+      }
+    | {
         functionName: 'expectEvent'
         eventName: EventName
       }
@@ -185,7 +214,7 @@ type Instruction = HasFrame &
         eventName: EventName
       }
     | {
-        functionName: 'appendData'
+        functionName: 'logData'
         key: string
         value: string
       }
@@ -321,10 +350,24 @@ class InstructionsManager {
         }
         break
 
-      case 'finishTest':
+      case 'finishTestWithDelay':
         yield {
-          text: `finishTest()`,
+          text: `finishTestWithDelay(${instr.seconds})`,
           color: 'default',
+        }
+        break
+      case 'finishTest':
+      case 'finishTestWithDelayCallback':
+        if (instr.functionName === 'finishTest') {
+          yield {
+            text: `finishTest()`,
+            color: 'default',
+          }
+        } else {
+          yield {
+            text: `finishTestWithDelay(${instr.seconds}) --> Delay Done`,
+            color: 'default',
+          }
         }
         if (acc.expectEventOnceInstrs.length > 0) {
           yield {
@@ -340,9 +383,9 @@ class InstructionsManager {
         }
         break
 
-      case 'appendData':
+      case 'logData':
         yield {
-          text: `${instr.key}: ${instr.value}`,
+          text: `logData("${instr.key}", "${instr.value}")`,
           color: 'default',
         }
         break
