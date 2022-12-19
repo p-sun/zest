@@ -361,6 +361,22 @@ export const allJestConfigs = {
     it: 'Should fail test',
     runZestTest: (test: ZTest, runJest: boolean) => {
       let result: ZTestResult | null
+      let testResultFn = runJest
+        ? jest.fn((testResult: ZTestResult) => {})
+        : undefined
+      if (testResultFn) {
+        test.addResultListener(testResultFn)
+
+        let count = 0
+        test.addResultListener((testResult: ZTestResult) => {
+          count++
+          if (count === 2) {
+            expect(testResult.status.passStatus === 'FAIL')
+            expect(testResult.status.done === true)
+          }
+        })
+      }
+
       test.expectEvent('TriggerEnter')
       test.expectEvent('TriggerExit')
       test.finishTestWithDelay(0.8)
@@ -371,10 +387,11 @@ export const allJestConfigs = {
 
       test.startEvent('TriggerEnter')
       result = test.finishFrame()
-      result = test.finishFrame()
-      result = test.finishFrame()
+
       if (runJest) {
-        expect(result).not.toBeUndefined()
+        expect(result).not.toBeFalsy()
+        expect(result?.status.passStatus === 'RUNNING')
+        expect(testResultFn).toBeCalledTimes(2)
       }
     },
   },
