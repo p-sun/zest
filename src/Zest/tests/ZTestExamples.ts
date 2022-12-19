@@ -395,6 +395,46 @@ export const allJestConfigs = {
       }
     },
   },
+
+  testCombo_collisions_pass: {
+    describe: 'Test Zest for collisions',
+    it: 'Should pass test',
+    runZestTest: (test: ZTest, runJest: boolean) => {
+      let result: ZTestResult | null
+
+      test.expectEvent('Collision')
+      test.startEvent('Collision')
+      test.finishTestWithDelay(0.8)
+
+      result = test.finishFrame()
+    },
+  },
+
+  testCombo_collisions_multipleEvents: {
+    describe: 'Test Zest for multiple collisions',
+    it: 'Should fail test when there are more than 1 per frame',
+    runZestTest: (test: ZTest, runJest: boolean) => {
+      let result: ZTestResult | null
+      test.finishTestWithDelay(0.8)
+
+      test.expectEvent('Collision')
+      test.startEvent('Collision')
+      test.startEvent('Collision')
+      result = test.finishFrame()
+      result = test.finishFrame()
+      result = test.finishFrame()
+
+      test.expectEvent('Collision')
+      test.startEvent('Collision')
+      result = test.finishFrame()
+
+      test.expectEvent('Collision')
+      test.startEvent('Collision')
+      test.startEvent('Collision')
+      test.startEvent('Collision')
+      result = test.finishFrame()
+    },
+  },
 }
 
 // @ts-ignore
