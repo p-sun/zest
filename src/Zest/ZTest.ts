@@ -531,9 +531,9 @@ class InstructionsManager {
         })
       }
 
-      lines = lines.concat([
-        ...this.parseLinesForInstruction(instr, accumulator),
-      ])
+      lines = lines.concat(
+        Array.from(this.parseLinesForInstruction(instr, accumulator))
+      )
     }
 
     const textStatus = 'TEST STATUS: ' + accumulator.status.passStatus + '<br>'
