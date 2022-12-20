@@ -1,69 +1,69 @@
-import { CreateZTestsRunner, ZTestResult } from '../ZTest'
+import { CreateZTestsStore as CreateZTestsStore, ZTestResult } from '../ZTest'
 
 describe('Test Zest for trigger enter exit, happy path', () => {
   it('Only first finishFrame has result', () => {
-    let library = CreateZTestsRunner()
-    const test = library.startTest('NewTestA')
+    let store = CreateZTestsStore()
+    const test = store.startTest('NewTestA')
     let result: ZTestResult | null
     test.addResultListener((testResult) => {})
 
     test.expectEvent('OnTriggerEnter')
     test.expectEvent('OnTriggerExit')
 
-    result = library.finishFrame()
+    result = store.finishFrame()
     expect(result).not.toBeNull()
 
-    result = library.finishFrame()
+    result = store.finishFrame()
     expect(result).toBeNull()
 
-    result = library.finishFrame()
+    result = store.finishFrame()
     expect(result).toBeNull()
 
     test.startEvent('OnTriggerEnter')
-    result = library.finishFrame()
+    result = store.finishFrame()
     expect(result).not.toBeNull()
 
     test.startEvent('OnTriggerExit')
 
-    result = library.finishFrame()
+    result = store.finishFrame()
     expect(result).not.toBeNull()
 
-    result = library.finishFrame()
+    result = store.finishFrame()
     expect(result).toBeNull()
   })
 })
 
 describe('Test Zest for trigger enter exit, missing trigger enter', () => {
   it('Should fail test', () => {
-    let library = CreateZTestsRunner()
-    const test = library.startTest('NewTestA')
+    let store = CreateZTestsStore()
+    const test = store.startTest('NewTestA')
     let result: ZTestResult | null
     test.addResultListener((testResult) => {})
 
     test.expectEvent('OnTriggerEnter')
     test.expectEvent('OnTriggerExit')
-    result = library.finishFrame()
+    result = store.finishFrame()
 
     test.startEvent('OnTriggerExit')
-    result = library.finishFrame()
+    result = store.finishFrame()
     expect(result).not.toBeNull()
 
-    result = library.finishFrame()
+    result = store.finishFrame()
     expect(result).toBeNull()
   })
 })
 
 describe('Test update results for current test', () => {
   it('Should only update result listeners once per frame as needed', () => {
-    let library = CreateZTestsRunner()
-    const testA = library.startTest('TestA')
-    const testB = library.startTest('TestB')
+    let store = CreateZTestsStore()
+    const testA = store.startTest('TestA')
+    const testB = store.startTest('TestB')
     let result: ZTestResult | null
 
     let countA = 0
     let countB = 0
     let countCurrent = 0
-    library.addCurrentResultListener((testResult) => {
+    store.addCurrentResultListener((testResult) => {
       countCurrent++
     })
     testA.addResultListener((testResult) => {
@@ -77,29 +77,29 @@ describe('Test update results for current test', () => {
     })
     testB.expectEvent('OnCollision')
 
-    result = library.finishFrame()
+    result = store.finishFrame()
 
     expect(countA).toBe(1)
     expect(countB).toBe(1)
     expect(countCurrent).toBe(1)
 
     testB.expectEvent('OnCollision')
-    result = library.finishFrame()
+    result = store.finishFrame()
 
     expect(countA).toBe(1)
     expect(countB).toBe(2)
     expect(countCurrent).toBe(1)
 
     testA.expectEvent('OnTriggerEnter')
-    result = library.finishFrame()
+    result = store.finishFrame()
 
     expect(countA).toBe(2)
     expect(countB).toBe(2)
     expect(countCurrent).toBe(2)
 
-    library.setCurrentTest('TestB')
+    store.setCurrentTest('TestB')
     testB.expectEvent('OnCollision')
-    result = library.finishFrame()
+    result = store.finishFrame()
 
     expect(countA).toBe(2)
     expect(countB).toBe(3)
@@ -108,72 +108,72 @@ describe('Test update results for current test', () => {
 })
 
 function testNewTestWithDataAppendsOnly() {
-  let library = CreateZTestsRunner()
+  let store = CreateZTestsStore()
   let result: ZTestResult | null
-  const test = library.startTest('NewTestA')
+  const test = store.startTest('NewTestA')
   test.appendData('keyA', 'valueA')
   test.appendData('keyB', 'valueB')
-  result = library.finishFrame()
+  result = store.finishFrame()
 
   test.appendData('keyC', 'valueC')
   test.appendData('keyD', 'valueD')
-  result = library.finishFrame()
+  result = store.finishFrame()
 }
 
 function testNewMultiTests_WithDataAppendsOnly() {
-  let library = CreateZTestsRunner()
+  let store = CreateZTestsStore()
   let result: ZTestResult | null
 
   const testA = 'NewTestA'
   const testB = 'NewTestB'
 
-  library.startTest(testA)
-  library.startTest(testB)
+  store.startTest(testA)
+  store.startTest(testB)
 
-  library.getTest(testB)?.appendData('keyAAA', 'valueBBB')
-  library.getTest(testA)?.appendData('keyA', 'valueA')
-  library.getTest(testA)?.appendData('keyB', 'valueB')
-  result = library.finishFrame()
+  store.getTest(testB)?.appendData('keyAAA', 'valueBBB')
+  store.getTest(testA)?.appendData('keyA', 'valueA')
+  store.getTest(testA)?.appendData('keyB', 'valueB')
+  result = store.finishFrame()
 
-  library.getTest(testA)?.appendData('keyC', 'valueC')
-  library.getTest(testB)?.appendData('keyCCC', 'valueCCC')
-  library.getTest(testA)?.appendData('keyD', 'valueD')
-  library.getTest(testB)?.appendData('keyKKK', 'valueKKK')
-  result = library.finishFrame()
+  store.getTest(testA)?.appendData('keyC', 'valueC')
+  store.getTest(testB)?.appendData('keyCCC', 'valueCCC')
+  store.getTest(testA)?.appendData('keyD', 'valueD')
+  store.getTest(testB)?.appendData('keyKKK', 'valueKKK')
+  result = store.finishFrame()
 }
 
 function testNewMultiTests_TestBHasOnlyOneFrame() {
-  let library = CreateZTestsRunner()
+  let store = CreateZTestsStore()
   let result: ZTestResult | null
 
   const testA = 'NewTestA'
   const testB = 'NewTestB'
 
   // Most recent 'startTest()' decides the current test
-  library.startTest(testA)
-  library.startTest(testB)
+  store.startTest(testA)
+  store.startTest(testB)
 
-  library.getTest(testA)?.appendData('keyA', 'valueA')
-  result = library.finishFrame()
+  store.getTest(testA)?.appendData('keyA', 'valueA')
+  result = store.finishFrame()
 
   // testB only has one event, so it only displays FIRST FRAME
-  library.getTest(testB)?.appendData('keyKKK', 'valueKKK')
-  library.getTest(testA)?.appendData('keyD', 'valueD')
-  result = library.finishFrame()
+  store.getTest(testB)?.appendData('keyKKK', 'valueKKK')
+  store.getTest(testA)?.appendData('keyD', 'valueD')
+  result = store.finishFrame()
 
   // Finishing another frame doesn't change testA and testB results
-  result = library.finishFrame()
+  result = store.finishFrame()
 
   // Display results from any previous test
-  // // displayTextOnHTML(library.getTestResults(testA)!)
-  // // displayTextOnHTML(library.getTestResults(testB)!)
+  // // displayTextOnHTML(store.getTestResults(testA)!)
+  // // displayTextOnHTML(store.getTestResults(testB)!)
 }
 
 function testEmptyStartTest() {
-  let library = CreateZTestsRunner()
+  let store = CreateZTestsStore()
   let result: ZTestResult | null
 
   const test = 'NewEmptyTest'
-  library.startTest(test)
-  result = library.finishFrame()
+  store.startTest(test)
+  result = store.finishFrame()
 }

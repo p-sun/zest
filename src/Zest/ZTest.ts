@@ -1,9 +1,9 @@
 import { Vec3 } from '../HorizonShim/HZShim'
 import ZTestImpl from './ZTestImpl'
-import ZTestsRunnerImpl from './ZTestsRunnerImpl'
+import ZTestsStoreImpl from './ZTestsStoreImpl'
 
-export function CreateZTestsRunner(): ZTestsRunner {
-  return new ZTestsRunnerImpl()
+export function CreateZTestsStore(): ZTestsStore {
+  return new ZTestsStoreImpl()
 }
 
 export function CreateZTest(testName: string): ZTest {
@@ -25,7 +25,7 @@ export class ZTestResult {
   ) {}
 }
 
-export interface ZTestsRunner {
+export interface ZTestsStore {
   startTest(testName: string): ZTest
   getTest(testName: string): ZTest | undefined
 

@@ -1,11 +1,11 @@
-import { CreateZTest, ZTest, ZTestResult, ZTestsRunner } from './ZTest'
+import { CreateZTest, ZTest, ZTestResult, ZTestsStore } from './ZTest'
 
 type CurrentTestData = {
   testName: string
   testId: string
 }
 
-export default class ZTestsRunnerImpl implements ZTestsRunner {
+export default class ZTestsStoreImpl implements ZTestsStore {
   private tests: { [testName: string]: ZTest } = {}
   private currentTestData?: CurrentTestData
   private currentResultListeners: ((testResult: ZTestResult) => void)[] = []
