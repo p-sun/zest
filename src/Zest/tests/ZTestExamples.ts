@@ -323,6 +323,10 @@ export const allJestConfigs = {
     describe: 'Test Zest for trigger enter exit, missing trigger ENTER',
     it: 'Should succeed test',
     runZestTest: (test: ZTest, runJest: boolean) => {
+      if (runJest) {
+        jest.useFakeTimers()
+      }
+
       let result: ZTestResult | null
       test.finishTestWithDelay(0.8)
 
@@ -340,6 +344,10 @@ export const allJestConfigs = {
     describe: 'Test Zest for trigger enter exit, missing trigger ENTER',
     it: 'Should fail test',
     runZestTest: (test: ZTest, runJest: boolean) => {
+      if (runJest) {
+        jest.useFakeTimers()
+      }
+
       let result: ZTestResult | null
       test.finishTestWithDelay(0.8)
 
@@ -359,6 +367,10 @@ export const allJestConfigs = {
     describe: 'Test Zest for trigger enter exit, missing trigger EXIT',
     it: 'Should fail test',
     runZestTest: (test: ZTest, runJest: boolean) => {
+      if (runJest) {
+        jest.useFakeTimers()
+      }
+
       let result: ZTestResult | null
       let testResultFn = runJest
         ? jest.fn((testResult: ZTestResult) => {})
@@ -399,6 +411,10 @@ export const allJestConfigs = {
     describe: 'Test Zest for collisions',
     it: 'Should pass test',
     runZestTest: (test: ZTest, runJest: boolean) => {
+      if (runJest) {
+        jest.useFakeTimers()
+      }
+
       let result: ZTestResult | null
       test.finishTestWithDelay(0.8)
 
@@ -413,6 +429,10 @@ export const allJestConfigs = {
     describe: 'Test Zest for multiple collisions',
     it: 'Should fail test when there are more than 1 per frame',
     runZestTest: (test: ZTest, runJest: boolean) => {
+      if (runJest) {
+        jest.useFakeTimers()
+      }
+
       let result: ZTestResult | null
       test.finishTestWithDelay(0.8)
 
