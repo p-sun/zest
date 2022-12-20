@@ -253,7 +253,10 @@ export class ZTestImpl implements ZTest {
     return this.sendResultToListeners()
   }
 
-  finishTestWithDelay(seconds: number) {
+  finishTestWithDelay(
+    seconds: number,
+    setTimeoutFn: (callback: TimerHandler, timeout?: number) => number
+  ) {
     this.needsUpdate = true
     this.instructionsMgr.push({
       functionName: 'finishTestWithDelay',
@@ -261,7 +264,7 @@ export class ZTestImpl implements ZTest {
       frame: this.currentFrame,
     })
 
-    setTimeout(() => {
+    setTimeoutFn(() => {
       this.needsUpdate = true
       this.instructionsMgr.push({
         functionName: 'finishTestWithDelayCallback',

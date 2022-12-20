@@ -332,7 +332,7 @@ export const allJestConfigs = {
       }
 
       let result: ZTestResult | null
-      test.finishTestWithDelay(0.8)
+      test.finishTestWithDelay(0.8, setTimeout)
 
       test.expectEvent('TriggerEnter')
       test.expectEvent('TriggerExit')
@@ -353,7 +353,7 @@ export const allJestConfigs = {
       }
 
       let result: ZTestResult | null
-      test.finishTestWithDelay(0.8)
+      test.finishTestWithDelay(0.8, setTimeout)
 
       test.expectEvent('TriggerEnter')
       test.expectEvent('TriggerExit')
@@ -392,7 +392,7 @@ export const allJestConfigs = {
         })
       }
 
-      test.finishTestWithDelay(0.8)
+      test.finishTestWithDelay(0.8, setTimeout)
       test.expectEvent('TriggerEnter')
       test.expectEvent('TriggerExit')
 
@@ -420,7 +420,7 @@ export const allJestConfigs = {
       }
 
       let result: ZTestResult | null
-      test.finishTestWithDelay(0.8)
+      test.finishTestWithDelay(0.8, setTimeout)
 
       test.expectEvent('Collision')
       test.startEvent('Collision')
@@ -438,7 +438,7 @@ export const allJestConfigs = {
       }
 
       let result: ZTestResult | null
-      test.finishTestWithDelay(0.8)
+      test.finishTestWithDelay(0.8, setTimeout)
 
       test.expectEvent('Collision')
       test.startEvent('Collision')

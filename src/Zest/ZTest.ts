@@ -56,7 +56,10 @@ export interface ZTest {
   finishFrame(): ZTestResult | null
 
   finishTest(): ZTestResult
-  finishTestWithDelay(seconds: number): void
+  finishTestWithDelay(
+    seconds: number,
+    setTimeoutFn: (callback: TimerHandler, timeout?: number) => number
+  ): void
 
   getTestResult(): ZTestResult
   addResultListener(updateResult: (testResult: ZTestResult) => void): void
