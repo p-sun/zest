@@ -1,5 +1,4 @@
-import { ZTest } from '../ZTest'
-import { ZTestImpl } from '../ZTestImpl'
+import { ZTest, ZTestImpl } from '../ZTest'
 import {
   JestTestName,
   JestConfigForName,
