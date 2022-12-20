@@ -1,5 +1,5 @@
 import { Vec3 } from '../HorizonShim/HZShim'
-import ZTestsStoreImpl from './ZTestsStoreImpl'
+import { ZTestsStoreImpl } from './ZTestImpl'
 
 export function CreateZTestsStore(): ZTestsStore {
   return new ZTestsStoreImpl()

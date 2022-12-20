@@ -324,7 +324,7 @@ export const allJestConfigs = {
   },
 
   testFinishFrameWDelay_triggerEnterExit_happyPath: {
-    describe: 'Test Zest for trigger enter exit, missing trigger ENTER',
+    describe: 'Test Zest for trigger enter exit, happy path',
     it: 'Should succeed test',
     runZestTest: (test: ZTest, runJest: boolean) => {
       if (runJest) {
