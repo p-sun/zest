@@ -1,4 +1,5 @@
-import { CreateZTest, ZTest, ZTestResult, ZTestsStore } from './ZTest'
+import { ZTest, ZTestResult, ZTestsStore } from './ZTest'
+import ZTestImpl from './ZTestImpl'
 
 type CurrentTestData = {
   testName: string
@@ -13,7 +14,7 @@ export default class ZTestsStoreImpl implements ZTestsStore {
   /* ---------------------------- Choose Which Test --------------------------- */
 
   startTest(testName: string): ZTest {
-    const test = CreateZTest(testName)
+    const test = new ZTestImpl(testName)
     test.addResultListener((testResult) => {
       this.updateResultIfCurrentTest(testResult)
     })

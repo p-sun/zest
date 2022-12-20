@@ -23,7 +23,7 @@ function WrapTextWithHorizonColorTags(text: string, color: LineColor) {
 
 type Frame = number
 
-type ZLine = { text: string; color: LineColor }
+type Line = { text: string; color: LineColor }
 
 export default class ZTestImpl implements ZTest {
   readonly testId: string
@@ -184,9 +184,9 @@ export default class ZTestImpl implements ZTest {
     )
   }
 
-  addResultListener(updateResultsFn: (testResult: ZTestResult) => void) {
+  addResultListener(updateResult: (testResult: ZTestResult) => void) {
     this.needsUpdate = true
-    this.resultListeners.push(updateResultsFn)
+    this.resultListeners.push(updateResult)
   }
 
   private sendResultToListeners(): ZTestResult {
@@ -308,7 +308,7 @@ class InstructionsManager {
   /* ------------------------------ Parse Results ----------------------------- */
 
   private static parseLinesForInstructions(instructions: Instruction[]): {
-    lines: ZLine[]
+    lines: Line[]
     status: ZTestStatus
   } {
     let currentFrame: Frame = -1
@@ -317,7 +317,7 @@ class InstructionsManager {
       expectEventOnceInstrs: [],
     }
 
-    let lines: ZLine[] = []
+    let lines: Line[] = []
     for (const instr of instructions) {
       if (currentFrame !== instr.frame) {
         currentFrame = instr.frame
@@ -334,7 +334,7 @@ class InstructionsManager {
     }
 
     const textStatus = 'TEST STATUS: ' + accumulator.status.passStatus + '<br>'
-    const testStatusLine: ZLine = {
+    const testStatusLine: Line = {
       text: textStatus,
       color:
         accumulator.status.passStatus === 'PASS'
@@ -352,7 +352,7 @@ class InstructionsManager {
   private static *parseLinesForInstruction(
     instr: Instruction,
     acc: InstructionsAcc
-  ): Generator<ZLine, void, unknown> {
+  ): Generator<Line, void, unknown> {
     switch (instr.functionName) {
       case 'startTest':
         yield {
@@ -522,7 +522,7 @@ class InstructionsManager {
     isExpected: boolean,
     isWarn: boolean,
     text: string
-  ): ZLine {
+  ): Line {
     const color = isExpected ? 'green' : isWarn ? 'yellow' : 'red'
     const status = isExpected ? 'OK' : isWarn ? 'WARN' : 'FAIL'
     return {

@@ -1,13 +1,8 @@
 import { Vec3 } from '../HorizonShim/HZShim'
-import ZTestImpl from './ZTestImpl'
 import ZTestsStoreImpl from './ZTestsStoreImpl'
 
 export function CreateZTestsStore(): ZTestsStore {
   return new ZTestsStoreImpl()
-}
-
-export function CreateZTest(testName: string): ZTest {
-  return new ZTestImpl(testName)
 }
 
 export type ZEventName = string
@@ -61,5 +56,5 @@ export interface ZTest {
   finishTestWithDelay(seconds: number): void
 
   getTestResult(): ZTestResult
-  addResultListener(updateResultsFn: (testResult: ZTestResult) => void): void
+  addResultListener(updateResult: (testResult: ZTestResult) => void): void
 }
