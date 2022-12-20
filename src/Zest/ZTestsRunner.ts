@@ -1,25 +1,35 @@
 import ZTest, { createZestTest, ZTestResult } from './ZTest'
 
+type CurrentTestData = {
+  testName: string
+  testId: string
+}
+
 export class ZTestsRunner {
   private tests: { [testName: string]: ZTest } = {}
-  private currentTestData:
-    | {
-        testName: string
-        testId: string
-      }
-    | undefined
+
+  private currentTestData?: CurrentTestData
+
+  private currentTestListeners: ((
+    testName: string,
+    testResult: ZTestResult
+  ) => void)[] = []
 
   /* ---------------------------- Choose Which Test --------------------------- */
 
   startTest(testName: string): ZTest {
     const test = createZestTest(testName)
-    test.addResultListener((testResults) => {
-      this.updateResultsForTest(testResults)
-    })
+    const testData = { testName, testId: test.testId }
     this.tests[testName] = test
+
     if (!this.getCurrentTest()) {
-      this.currentTestData = { testName, testId: test.testId }
+      this.currentTestData = testData
     }
+
+    test.addResultListener((testResults) => {
+      this.updateResultForTest(testData, testResults)
+    })
+
     return test
   }
 
@@ -46,11 +56,26 @@ export class ZTestsRunner {
 
   /* ------------------------------ Test Results ------------------------------ */
 
-  getTestResults(testName: string): ZTestResult | undefined {
+  getTestResult(testName: string): ZTestResult | undefined {
     return this.tests[testName].testResult()
   }
 
-  private updateResultsForTest(testResults: ZTestResult) {}
+  addCurrentResultListener(
+    updateResult: (testName: string, testResult: ZTestResult) => void
+  ) {
+    this.currentTestListeners.push(updateResult)
+  }
+
+  private updateResultForTest(
+    testData: CurrentTestData,
+    testResult: ZTestResult
+  ) {
+    if (testData.testId === testResult.testId) {
+      for (const listener of this.currentTestListeners) {
+        listener(testData.testName, testResult)
+      }
+    }
+  }
 
   /* -------------------------------- Lifecycle ------------------------------- */
 

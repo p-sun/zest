@@ -30,7 +30,7 @@ export default class ZTestImpl implements ZTest {
   private needsUpdate: boolean = true
   private currentFrame = 0
   private instructionsMgr: InstructionsManager
-  private resultsListeners: ((testResult: ZTestResult) => void)[] = []
+  private resultListeners: ((testResult: ZTestResult) => void)[] = []
 
   constructor(testName: string) {
     this.testId = String(new Date().getTime())
@@ -55,7 +55,7 @@ export default class ZTestImpl implements ZTest {
   }
 
   addResultListener(updateResultsFn: (testResult: ZTestResult) => void) {
-    this.resultsListeners.push(updateResultsFn)
+    this.resultListeners.push(updateResultsFn)
     this.needsUpdate = true
   }
 
@@ -120,7 +120,7 @@ export default class ZTestImpl implements ZTest {
     const results = this.testResult()
     this.needsUpdate = false
 
-    for (const listener of this.resultsListeners) {
+    for (const listener of this.resultListeners) {
       listener(results)
     }
     return results
