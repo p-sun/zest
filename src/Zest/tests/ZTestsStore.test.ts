@@ -63,8 +63,12 @@ describe('Test update results for current test', () => {
     let countA = 0
     let countB = 0
     let countCurrent = 0
+    let countAll = 0
     store.addCurrentResultListener((testResult) => {
       countCurrent++
+    })
+    store.addResultListener((testResult) => {
+      countAll++
     })
     testA.addResultListener((testResult) => {
       countA++
@@ -82,6 +86,7 @@ describe('Test update results for current test', () => {
     expect(countA).toBe(1)
     expect(countB).toBe(1)
     expect(countCurrent).toBe(1)
+    expect(countAll).toBe(2) // One for each test
 
     testB.expectEvent('OnCollision')
     result = store.finishFrame()
@@ -89,6 +94,7 @@ describe('Test update results for current test', () => {
     expect(countA).toBe(1)
     expect(countB).toBe(2)
     expect(countCurrent).toBe(1)
+    expect(countAll).toBe(3)
 
     testA.expectEvent('OnTriggerEnter')
     result = store.finishFrame()
@@ -96,6 +102,7 @@ describe('Test update results for current test', () => {
     expect(countA).toBe(2)
     expect(countB).toBe(2)
     expect(countCurrent).toBe(2)
+    expect(countAll).toBe(4)
 
     store.setCurrentTest('TestB')
     testB.expectEvent('OnCollision')
@@ -104,6 +111,7 @@ describe('Test update results for current test', () => {
     expect(countA).toBe(2)
     expect(countB).toBe(3)
     expect(countCurrent).toBe(3)
+    expect(countAll).toBe(5)
   })
 })
 

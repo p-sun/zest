@@ -33,6 +33,9 @@ export interface ZTestsStore {
   addCurrentResultListener(
     updateResult: (testResult: ZTestResult) => void
   ): void
+  addResultListener(
+    updateResult: (testResult: ZTestResult, isCurrentTest: boolean) => void
+  ): void
 }
 
 export interface ZTest {

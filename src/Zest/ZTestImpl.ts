@@ -16,9 +16,15 @@ type CurrentTestData = {
   testId: string
 }
 
+type ZTestStoreListener = (
+  testResult: ZTestResult,
+  isCurrentTest: boolean
+) => void
+
 export class ZTestsStoreImpl implements ZTestsStore {
   private tests: { [testName: string]: ZTest } = {}
   private currentTestData?: CurrentTestData
+  private resultListeners: ZTestStoreListener[] = []
   private currentResultListeners: ((testResult: ZTestResult) => void)[] = []
 
   /* ---------------------------- Choose Which Test --------------------------- */
@@ -26,7 +32,7 @@ export class ZTestsStoreImpl implements ZTestsStore {
   startTest(testName: string): ZTest {
     const test = new ZTestImpl(testName)
     test.addResultListener((testResult) => {
-      this.updateResultIfCurrentTest(testResult)
+      this.updateResultListeners(testResult)
     })
 
     this.tests[testName] = test
@@ -81,9 +87,17 @@ export class ZTestsStoreImpl implements ZTestsStore {
     this.currentResultListeners.push(updateResult)
   }
 
-  private updateResultIfCurrentTest(testResult: ZTestResult) {
-    const currentTestId = this.currentTestData?.testId
-    if (currentTestId === testResult.testId) {
+  addResultListener(updateResult: ZTestStoreListener) {
+    this.resultListeners.push(updateResult)
+  }
+
+  private updateResultListeners(testResult: ZTestResult) {
+    const isCurrentTest = this.currentTestData?.testId === testResult.testId
+
+    for (const updateResult of this.resultListeners) {
+      updateResult(testResult, isCurrentTest)
+    }
+    if (isCurrentTest) {
       for (const updateResult of this.currentResultListeners) {
         updateResult(testResult)
       }
