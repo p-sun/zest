@@ -1,5 +1,4 @@
-import { ZTestResult } from './Zest/ZTest'
-import { createZestTest } from './Zest/ZTest'
+import { CreateZTest, ZTestResult } from './Zest/ZTest'
 import {
   JestTestName,
   JestConfigForName,
@@ -98,7 +97,7 @@ class Main {
     const jestConfig = JestConfigForName(jestTestName)
     const prependString = jestConfig.describe + '<br>> ' + jestConfig.it
 
-    const zestTest = createZestTest(jestTestName)
+    const zestTest = CreateZTest(jestTestName)
     this.currentTestId = zestTest.testId
     zestTest.addResultListener((testResult: ZTestResult) => {
       if (testResult.testId === this.currentTestId) {

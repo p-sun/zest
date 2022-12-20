@@ -1,4 +1,4 @@
-import ZTest, { createZestTest } from '../ZTest'
+import { CreateZTest, ZTest } from '../ZTest'
 import {
   JestTestName,
   JestConfigForName,
@@ -9,7 +9,7 @@ const runJestTest = (testName: JestTestName) => {
   const config = JestConfigForName(testName)
   describe(config.describe, () => {
     it(config.it, () => {
-      const zestTest: ZTest = createZestTest(testName)
+      const zestTest: ZTest = CreateZTest(testName)
       config.runZestTest(zestTest, true)
     })
   })

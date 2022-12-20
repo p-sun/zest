@@ -1,9 +1,8 @@
-import { ZTestResult } from '../ZTest'
-import { ZTestsRunner } from '../ZTestsRunner'
+import { CreateZTestsRunner, ZTestResult } from '../ZTest'
 
 describe('Test Zest for trigger enter exit, happy path', () => {
   it('Only first finishFrame has result', () => {
-    let library = new ZTestsRunner()
+    let library = CreateZTestsRunner()
     const test = library.startTest('NewTestA')
     let result: ZTestResult | null
     test.addResultListener((testResult) => {})
@@ -36,7 +35,7 @@ describe('Test Zest for trigger enter exit, happy path', () => {
 
 describe('Test Zest for trigger enter exit, missing trigger enter', () => {
   it('Should fail test', () => {
-    let library = new ZTestsRunner()
+    let library = CreateZTestsRunner()
     const test = library.startTest('NewTestA')
     let result: ZTestResult | null
     test.addResultListener((testResult) => {})
@@ -56,7 +55,7 @@ describe('Test Zest for trigger enter exit, missing trigger enter', () => {
 
 describe('Test update results for current test', () => {
   it('Should only update result listeners once per frame as needed', () => {
-    let library = new ZTestsRunner()
+    let library = CreateZTestsRunner()
     const testA = library.startTest('TestA')
     const testB = library.startTest('TestB')
     let result: ZTestResult | null
@@ -109,7 +108,7 @@ describe('Test update results for current test', () => {
 })
 
 function testNewTestWithDataAppendsOnly() {
-  let library = new ZTestsRunner()
+  let library = CreateZTestsRunner()
   let result: ZTestResult | null
   const test = library.startTest('NewTestA')
   test.appendData('keyA', 'valueA')
@@ -122,7 +121,7 @@ function testNewTestWithDataAppendsOnly() {
 }
 
 function testNewMultiTests_WithDataAppendsOnly() {
-  let library = new ZTestsRunner()
+  let library = CreateZTestsRunner()
   let result: ZTestResult | null
 
   const testA = 'NewTestA'
@@ -144,7 +143,7 @@ function testNewMultiTests_WithDataAppendsOnly() {
 }
 
 function testNewMultiTests_TestBHasOnlyOneFrame() {
-  let library = new ZTestsRunner()
+  let library = CreateZTestsRunner()
   let result: ZTestResult | null
 
   const testA = 'NewTestA'
@@ -171,7 +170,7 @@ function testNewMultiTests_TestBHasOnlyOneFrame() {
 }
 
 function testEmptyStartTest() {
-  let library = new ZTestsRunner()
+  let library = CreateZTestsRunner()
   let result: ZTestResult | null
 
   const test = 'NewEmptyTest'

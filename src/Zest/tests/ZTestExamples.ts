@@ -1,6 +1,5 @@
 import { Vec3 } from '../../HorizonShim/HZShim'
-import ZTest, { createZestTest, ZTestResult } from '../ZTest'
-import { ZTestsRunner } from '../ZTestsRunner'
+import { ZTestResult, ZTest } from '../ZTest'
 
 export type JestTestConfig = {
   describe: string

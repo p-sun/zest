@@ -1,5 +1,5 @@
 import { Vec3 } from '../HorizonShim/HZShim'
-import ZTest, { EventName, ZTestResult, ZTestStatus } from './ZTest'
+import { ZEventName, ZTest, ZTestResult, ZTestStatus } from './ZTest'
 
 type LineColor = 'default' | 'red' | 'green' | 'yellow' | 'grey'
 
@@ -42,23 +42,6 @@ export default class ZTestImpl implements ZTest {
     })
   }
 
-  /* ----------------------------- Get Test Result ---------------------------- */
-
-  testResult(): ZTestResult {
-    const { text, status } = this.instructionsMgr.getHorizonString()
-    return new ZTestResult(
-      this.instructionsMgr.testName,
-      this.testId,
-      status,
-      text
-    )
-  }
-
-  addResultListener(updateResultsFn: (testResult: ZTestResult) => void) {
-    this.needsUpdate = true
-    this.resultListeners.push(updateResultsFn)
-  }
-
   /* --------------------------- Event Expectations --------------------------- */
 
   expectEvent(eventName: string) {
@@ -70,62 +53,13 @@ export default class ZTestImpl implements ZTest {
     })
   }
 
-  startEvent(eventName: EventName) {
+  startEvent(eventName: ZEventName) {
     this.needsUpdate = true
     this.instructionsMgr.push({
       functionName: 'startEvent',
       eventName,
       frame: this.currentFrame,
     })
-  }
-
-  /* ---------------------------- Public Lifecycle ---------------------------- */
-
-  finishTest(): ZTestResult {
-    this.needsUpdate = true
-    this.instructionsMgr.push({
-      functionName: 'finishTest',
-      frame: this.currentFrame,
-    })
-
-    return this.sendResultToListeners()
-  }
-
-  finishTestWithDelay(seconds: number) {
-    this.needsUpdate = true
-    this.instructionsMgr.push({
-      functionName: 'finishTestWithDelay',
-      seconds,
-      frame: this.currentFrame,
-    })
-
-    setTimeout(() => {
-      this.needsUpdate = true
-      this.instructionsMgr.push({
-        functionName: 'finishTestWithDelayCallback',
-        seconds,
-        frame: this.currentFrame,
-      })
-      this.sendResultToListeners()
-    }, seconds * 1000)
-  }
-
-  finishFrame(): ZTestResult | null {
-    this.currentFrame++
-    if (this.needsUpdate) {
-      return this.sendResultToListeners()
-    }
-    return null
-  }
-
-  private sendResultToListeners(): ZTestResult {
-    const results = this.testResult()
-    this.needsUpdate = false
-
-    for (const listener of this.resultListeners) {
-      listener(results)
-    }
-    return results
   }
 
   /* ------------------------------- Append Data ------------------------------ */
@@ -187,6 +121,72 @@ export default class ZTestImpl implements ZTest {
       frame: this.currentFrame,
     })
   }
+
+  /* ---------------------------- Public Lifecycle ---------------------------- */
+
+  finishTest(): ZTestResult {
+    this.needsUpdate = true
+    this.instructionsMgr.push({
+      functionName: 'finishTest',
+      frame: this.currentFrame,
+    })
+
+    return this.sendResultToListeners()
+  }
+
+  finishTestWithDelay(seconds: number) {
+    this.needsUpdate = true
+    this.instructionsMgr.push({
+      functionName: 'finishTestWithDelay',
+      seconds,
+      frame: this.currentFrame,
+    })
+
+    setTimeout(() => {
+      this.needsUpdate = true
+      this.instructionsMgr.push({
+        functionName: 'finishTestWithDelayCallback',
+        seconds,
+        frame: this.currentFrame,
+      })
+      this.sendResultToListeners()
+    }, seconds * 1000)
+  }
+
+  finishFrame(): ZTestResult | null {
+    this.currentFrame++
+    if (this.needsUpdate) {
+      return this.sendResultToListeners()
+    }
+    return null
+  }
+
+  /* ----------------------------- Get Test Result ---------------------------- */
+
+  getTestResult(): ZTestResult {
+    const { text, status } = this.instructionsMgr.getHorizonString()
+    return new ZTestResult(
+      this.instructionsMgr.testName,
+      this.testId,
+      status,
+      text
+    )
+  }
+
+  addResultListener(updateResultsFn: (testResult: ZTestResult) => void) {
+    this.needsUpdate = true
+    this.resultListeners.push(updateResultsFn)
+  }
+
+  private sendResultToListeners(): ZTestResult {
+    const results = this.getTestResult()
+    this.needsUpdate = false
+
+    for (const listener of this.resultListeners) {
+      listener(results)
+    }
+    return results
+  }
 }
 
 type HasFrame = { frame: Frame }
@@ -210,11 +210,11 @@ type Instruction = HasFrame &
       }
     | {
         functionName: 'expectEvent'
-        eventName: EventName
+        eventName: ZEventName
       }
     | {
         functionName: 'startEvent'
-        eventName: EventName
+        eventName: ZEventName
       }
     | {
         functionName: 'appendData'

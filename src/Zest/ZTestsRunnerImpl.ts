@@ -1,21 +1,19 @@
-import ZTest, { createZestTest, ZTestResult } from './ZTest'
+import { CreateZTest, ZTest, ZTestResult, ZTestsRunner } from './ZTest'
 
 type CurrentTestData = {
   testName: string
   testId: string
 }
 
-export class ZTestsRunner {
+export default class ZTestsRunnerImpl implements ZTestsRunner {
   private tests: { [testName: string]: ZTest } = {}
-
   private currentTestData?: CurrentTestData
-
   private currentResultListeners: ((testResult: ZTestResult) => void)[] = []
 
   /* ---------------------------- Choose Which Test --------------------------- */
 
   startTest(testName: string): ZTest {
-    const test = createZestTest(testName)
+    const test = CreateZTest(testName)
     test.addResultListener((testResult) => {
       this.updateResultIfCurrentTest(testResult)
     })
@@ -49,10 +47,23 @@ export class ZTestsRunner {
     return testName ? this.tests[testName] : undefined
   }
 
+  /* -------------------------------- Lifecycle ------------------------------- */
+
+  finishFrame(): ZTestResult | null {
+    let currentResult: ZTestResult | null = null
+    for (const [testName, test] of Object.entries(this.tests)) {
+      const testResult = test.finishFrame()
+      if (testResult && testResult.testId === this.currentTestData?.testId) {
+        currentResult = testResult
+      }
+    }
+    return currentResult
+  }
+
   /* ------------------------------ Test Results ------------------------------ */
 
   getTestResult(testName: string): ZTestResult | undefined {
-    return this.tests[testName].testResult()
+    return this.tests[testName].getTestResult()
   }
 
   addCurrentResultListener(updateResult: (testResult: ZTestResult) => void) {
@@ -66,18 +77,5 @@ export class ZTestsRunner {
         updateResult(testResult)
       }
     }
-  }
-
-  /* -------------------------------- Lifecycle ------------------------------- */
-
-  finishFrame(): ZTestResult | null {
-    let currentResult: ZTestResult | null = null
-    for (const [testName, test] of Object.entries(this.tests)) {
-      const testResult = test.finishFrame()
-      if (testResult && testResult.testId === this.currentTestData?.testId) {
-        currentResult = testResult
-      }
-    }
-    return currentResult
   }
 }
