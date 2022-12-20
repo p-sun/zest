@@ -128,10 +128,10 @@ export default class ZTestImpl implements ZTest {
 
   /* ------------------------------- Append Data ------------------------------ */
 
-  logData(key: string, value: string) {
+  appendData(key: string, value: string) {
     this.needsUpdate = true
     this.instructionsMgr.push({
-      functionName: 'logData',
+      functionName: 'appendData',
       key,
       value,
       frame: this.currentFrame,
@@ -215,7 +215,7 @@ type Instruction = HasFrame &
         eventName: EventName
       }
     | {
-        functionName: 'logData'
+        functionName: 'appendData'
         key: string
         value: string
       }
@@ -416,9 +416,9 @@ class InstructionsManager {
         }
         break
 
-      case 'logData':
+      case 'appendData':
         yield {
-          text: `logData("${instr.key}", "${instr.value}")`,
+          text: `appendData("${instr.key}", "${instr.value}")`,
           color: 'default',
         }
         break

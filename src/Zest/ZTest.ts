@@ -21,7 +21,7 @@ export default interface ZTest {
   finishTest(): ZTestResult
   finishTestWithDelay: (seconds: number) => void
 
-  logData: (key: string, value: string) => void
+  appendData: (key: string, value: string) => void
 
   expectEqual: (key: string, actual: string, expected: string) => void
   expectNotEqual: (key: string, actual: string, expected: string) => void

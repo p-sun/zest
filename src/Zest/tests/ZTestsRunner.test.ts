@@ -58,12 +58,12 @@ function testNewTestWithDataAppendsOnly() {
   let library = new ZTestsRunner()
   let result: ZTestResult | null
   const test = library.startTest('NewTestA')
-  test.logData('keyA', 'valueA')
-  test.logData('keyB', 'valueB')
+  test.appendData('keyA', 'valueA')
+  test.appendData('keyB', 'valueB')
   result = library.finishFrame()
 
-  test.logData('keyC', 'valueC')
-  test.logData('keyD', 'valueD')
+  test.appendData('keyC', 'valueC')
+  test.appendData('keyD', 'valueD')
   result = library.finishFrame()
 }
 
@@ -77,15 +77,15 @@ function testNewMultiTests_WithDataAppendsOnly() {
   library.startTest(testA)
   library.startTest(testB)
 
-  library.getTest(testB)?.logData('keyAAA', 'valueBBB')
-  library.getTest(testA)?.logData('keyA', 'valueA')
-  library.getTest(testA)?.logData('keyB', 'valueB')
+  library.getTest(testB)?.appendData('keyAAA', 'valueBBB')
+  library.getTest(testA)?.appendData('keyA', 'valueA')
+  library.getTest(testA)?.appendData('keyB', 'valueB')
   result = library.finishFrame()
 
-  library.getTest(testA)?.logData('keyC', 'valueC')
-  library.getTest(testB)?.logData('keyCCC', 'valueCCC')
-  library.getTest(testA)?.logData('keyD', 'valueD')
-  library.getTest(testB)?.logData('keyKKK', 'valueKKK')
+  library.getTest(testA)?.appendData('keyC', 'valueC')
+  library.getTest(testB)?.appendData('keyCCC', 'valueCCC')
+  library.getTest(testA)?.appendData('keyD', 'valueD')
+  library.getTest(testB)?.appendData('keyKKK', 'valueKKK')
   result = library.finishFrame()
 }
 
@@ -100,12 +100,12 @@ function testNewMultiTests_TestBHasOnlyOneFrame() {
   library.startTest(testA)
   library.startTest(testB)
 
-  library.getTest(testA)?.logData('keyA', 'valueA')
+  library.getTest(testA)?.appendData('keyA', 'valueA')
   result = library.finishFrame()
 
   // testB only has one event, so it only displays FIRST FRAME
-  library.getTest(testB)?.logData('keyKKK', 'valueKKK')
-  library.getTest(testA)?.logData('keyD', 'valueD')
+  library.getTest(testB)?.appendData('keyKKK', 'valueKKK')
+  library.getTest(testA)?.appendData('keyD', 'valueD')
   result = library.finishFrame()
 
   // Finishing another frame doesn't change testA and testB results

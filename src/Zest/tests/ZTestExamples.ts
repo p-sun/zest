@@ -215,14 +215,14 @@ export const allJestConfigs = {
     },
   },
 
-  testLogData: {
+  testAppendData: {
     describe: 'when appending data',
     it: 'should display data',
     runZestTest: (test: ZTest, runJest: boolean) => {
       test.expectEvent('myEventA')
-      test.logData('myKey1', 'myValue1')
+      test.appendData('myKey1', 'myValue1')
       test.startEvent('myEventA')
-      test.logData('myKey2', 'myValue2')
+      test.appendData('myKey2', 'myValue2')
       test.finishFrame()
     },
   },
