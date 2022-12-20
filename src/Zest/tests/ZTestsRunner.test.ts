@@ -54,6 +54,60 @@ describe('Test Zest for trigger enter exit, missing trigger enter', () => {
   })
 })
 
+describe('Test update results for current test', () => {
+  it('Should only update result listeners once per frame as needed', () => {
+    let library = new ZTestsRunner()
+    const testA = library.startTest('TestA')
+    const testB = library.startTest('TestB')
+    let result: ZTestResult | null
+
+    let countA = 0
+    let countB = 0
+    let countCurrent = 0
+    library.addCurrentResultListener((testResult) => {
+      countCurrent++
+    })
+    testA.addResultListener((testResult) => {
+      countA++
+    })
+    testA.expectEvent('OnTriggerEnter')
+    testA.expectEvent('OnTriggerExit')
+
+    testB.addResultListener((testResult) => {
+      countB++
+    })
+    testB.expectEvent('OnCollision')
+
+    result = library.finishFrame()
+
+    expect(countA).toBe(1)
+    expect(countB).toBe(1)
+    expect(countCurrent).toBe(1)
+
+    testB.expectEvent('OnCollision')
+    result = library.finishFrame()
+
+    expect(countA).toBe(1)
+    expect(countB).toBe(2)
+    expect(countCurrent).toBe(1)
+
+    testA.expectEvent('OnTriggerEnter')
+    result = library.finishFrame()
+
+    expect(countA).toBe(2)
+    expect(countB).toBe(2)
+    expect(countCurrent).toBe(2)
+
+    library.setCurrentTest('TestB')
+    testB.expectEvent('OnCollision')
+    result = library.finishFrame()
+
+    expect(countA).toBe(2)
+    expect(countB).toBe(3)
+    expect(countCurrent).toBe(3)
+  })
+})
+
 function testNewTestWithDataAppendsOnly() {
   let library = new ZTestsRunner()
   let result: ZTestResult | null

@@ -10,25 +10,20 @@ export class ZTestsRunner {
 
   private currentTestData?: CurrentTestData
 
-  private currentTestListeners: ((
-    testName: string,
-    testResult: ZTestResult
-  ) => void)[] = []
+  private currentResultListeners: ((testResult: ZTestResult) => void)[] = []
 
   /* ---------------------------- Choose Which Test --------------------------- */
 
   startTest(testName: string): ZTest {
     const test = createZestTest(testName)
-    const testData = { testName, testId: test.testId }
-    this.tests[testName] = test
-
-    if (!this.getCurrentTest()) {
-      this.currentTestData = testData
-    }
-
-    test.addResultListener((testResults) => {
-      this.updateResultForTest(testData, testResults)
+    test.addResultListener((testResult) => {
+      this.updateResultIfCurrentTest(testResult)
     })
+
+    this.tests[testName] = test
+    if (!this.currentTestData) {
+      this.currentTestData = { testName, testId: test.testId }
+    }
 
     return test
   }
@@ -60,19 +55,15 @@ export class ZTestsRunner {
     return this.tests[testName].testResult()
   }
 
-  addCurrentResultListener(
-    updateResult: (testName: string, testResult: ZTestResult) => void
-  ) {
-    this.currentTestListeners.push(updateResult)
+  addCurrentResultListener(updateResult: (testResult: ZTestResult) => void) {
+    this.currentResultListeners.push(updateResult)
   }
 
-  private updateResultForTest(
-    testData: CurrentTestData,
-    testResult: ZTestResult
-  ) {
-    if (testData.testId === testResult.testId) {
-      for (const listener of this.currentTestListeners) {
-        listener(testData.testName, testResult)
+  private updateResultIfCurrentTest(testResult: ZTestResult) {
+    const currentTestId = this.currentTestData?.testId
+    if (currentTestId === testResult.testId) {
+      for (const updateResult of this.currentResultListeners) {
+        updateResult(testResult)
       }
     }
   }
@@ -80,12 +71,13 @@ export class ZTestsRunner {
   /* -------------------------------- Lifecycle ------------------------------- */
 
   finishFrame(): ZTestResult | null {
+    let currentResult: ZTestResult | null = null
     for (const [testName, test] of Object.entries(this.tests)) {
       const testResult = test.finishFrame()
       if (testResult && testResult.testId === this.currentTestData?.testId) {
-        return testResult
+        currentResult = testResult
       }
     }
-    return null
+    return currentResult
   }
 }

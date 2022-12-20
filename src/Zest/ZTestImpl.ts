@@ -33,7 +33,7 @@ export default class ZTestImpl implements ZTest {
   private resultListeners: ((testResult: ZTestResult) => void)[] = []
 
   constructor(testName: string) {
-    this.testId = String(new Date().getTime())
+    this.testId = String(Math.random()) + Math.random()
     this.instructionsMgr = new InstructionsManager(testName)
     this.instructionsMgr.push({
       functionName: 'startTest',
@@ -55,13 +55,14 @@ export default class ZTestImpl implements ZTest {
   }
 
   addResultListener(updateResultsFn: (testResult: ZTestResult) => void) {
-    this.resultListeners.push(updateResultsFn)
     this.needsUpdate = true
+    this.resultListeners.push(updateResultsFn)
   }
 
   /* --------------------------- Event Expectations --------------------------- */
 
   expectEvent(eventName: string) {
+    this.needsUpdate = true
     this.instructionsMgr.push({
       functionName: 'expectEvent',
       eventName,
@@ -91,6 +92,7 @@ export default class ZTestImpl implements ZTest {
   }
 
   finishTestWithDelay(seconds: number) {
+    this.needsUpdate = true
     this.instructionsMgr.push({
       functionName: 'finishTestWithDelay',
       seconds,
