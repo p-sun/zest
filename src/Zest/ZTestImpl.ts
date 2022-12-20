@@ -64,10 +64,21 @@ export default class ZTestImpl implements ZTest {
 
   /* ------------------------------- Append Data ------------------------------ */
 
-  appendData(key: string, value: string) {
+  appendData(str1: string, str2?: string, str3?: string) {
     this.needsUpdate = true
     this.instructionsMgr.push({
       functionName: 'appendData',
+      str1,
+      str2,
+      str3,
+      frame: this.currentFrame,
+    })
+  }
+
+  appendDataKeyValue(key: string, value: string) {
+    this.needsUpdate = true
+    this.instructionsMgr.push({
+      functionName: 'appendDataKeyValue',
       key,
       value,
       frame: this.currentFrame,
@@ -217,9 +228,15 @@ type Instruction = HasFrame &
         eventName: ZEventName
       }
     | {
-        functionName: 'appendData'
+        functionName: 'appendDataKeyValue'
         key: string
         value: string
+      }
+    | {
+        functionName: 'appendData'
+        str1: string
+        str2?: string
+        str3?: string
       }
     | {
         functionName: 'expectEqual'
@@ -417,8 +434,26 @@ class InstructionsManager {
           acc.status = { done: true, passStatus: finalStatus }
         }
         break
-
       case 'appendData':
+        if (instr.str3) {
+          yield {
+            text: `appendData("${instr.str1}", "${instr.str2}", "${instr.str3}")`,
+            color: 'default',
+          }
+        } else if (instr.str2) {
+          yield {
+            text: `appendData("${instr.str1}", "${instr.str2}")`,
+            color: 'default',
+          }
+        } else {
+          yield {
+            text: `appendData("${instr.str1}")`,
+            color: 'default',
+          }
+        }
+        break
+
+      case 'appendDataKeyValue':
         yield {
           text: `appendData("${instr.key}", "${instr.value}")`,
           color: 'default',

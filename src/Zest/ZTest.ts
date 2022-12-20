@@ -46,7 +46,8 @@ export interface ZTest {
   expectEvent(eventName: ZEventName): void
   startEvent(eventName: string): void
 
-  appendData(key: string, value: string): void
+  appendData(str1: string, str2?: string, str3?: string): void
+  appendDataKeyValue(key: string, value: string): void
 
   expectEqual(key: string, actual: string, expected: string): void
   expectNotEqual(key: string, actual: string, expected: string): void

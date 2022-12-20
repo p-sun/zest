@@ -111,12 +111,12 @@ function testNewTestWithDataAppendsOnly() {
   let store = CreateZTestsStore()
   let result: ZTestResult | null
   const test = store.startTest('NewTestA')
-  test.appendData('keyA', 'valueA')
-  test.appendData('keyB', 'valueB')
+  test.appendDataKeyValue('keyA', 'valueA')
+  test.appendDataKeyValue('keyB', 'valueB')
   result = store.finishFrame()
 
-  test.appendData('keyC', 'valueC')
-  test.appendData('keyD', 'valueD')
+  test.appendDataKeyValue('keyC', 'valueC')
+  test.appendDataKeyValue('keyD', 'valueD')
   result = store.finishFrame()
 }
 
@@ -130,15 +130,15 @@ function testNewMultiTests_WithDataAppendsOnly() {
   store.startTest(testA)
   store.startTest(testB)
 
-  store.getTest(testB)?.appendData('keyAAA', 'valueBBB')
-  store.getTest(testA)?.appendData('keyA', 'valueA')
-  store.getTest(testA)?.appendData('keyB', 'valueB')
+  store.getTest(testB)?.appendDataKeyValue('keyAAA', 'valueBBB')
+  store.getTest(testA)?.appendDataKeyValue('keyA', 'valueA')
+  store.getTest(testA)?.appendDataKeyValue('keyB', 'valueB')
   result = store.finishFrame()
 
-  store.getTest(testA)?.appendData('keyC', 'valueC')
-  store.getTest(testB)?.appendData('keyCCC', 'valueCCC')
-  store.getTest(testA)?.appendData('keyD', 'valueD')
-  store.getTest(testB)?.appendData('keyKKK', 'valueKKK')
+  store.getTest(testA)?.appendDataKeyValue('keyC', 'valueC')
+  store.getTest(testB)?.appendDataKeyValue('keyCCC', 'valueCCC')
+  store.getTest(testA)?.appendDataKeyValue('keyD', 'valueD')
+  store.getTest(testB)?.appendDataKeyValue('keyKKK', 'valueKKK')
   result = store.finishFrame()
 }
 
@@ -153,12 +153,12 @@ function testNewMultiTests_TestBHasOnlyOneFrame() {
   store.startTest(testA)
   store.startTest(testB)
 
-  store.getTest(testA)?.appendData('keyA', 'valueA')
+  store.getTest(testA)?.appendDataKeyValue('keyA', 'valueA')
   result = store.finishFrame()
 
   // testB only has one event, so it only displays FIRST FRAME
-  store.getTest(testB)?.appendData('keyKKK', 'valueKKK')
-  store.getTest(testA)?.appendData('keyD', 'valueD')
+  store.getTest(testB)?.appendDataKeyValue('keyKKK', 'valueKKK')
+  store.getTest(testA)?.appendDataKeyValue('keyD', 'valueD')
   result = store.finishFrame()
 
   // Finishing another frame doesn't change testA and testB results
