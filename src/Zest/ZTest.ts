@@ -209,9 +209,9 @@ function WrapTextWithHorizonColorTags(text: string, color: LineColor) {
   }
   switch (color) {
     case 'red':
-      return `<color=#f88>${text}</color>`
+      return `<color=#f66>${text}</color>`
     case 'green':
-      return `<color=#8f8>${text}</color>`
+      return `<color=#6f6>${text}</color>`
     case 'yellow':
       return `<color=#ff0>${text}</color>`
     case 'grey':
