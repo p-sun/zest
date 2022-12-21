@@ -578,13 +578,13 @@ class InstructionsManager {
         if (expectOnce) {
           if (instr.eventName === expectOnce.eventName) {
             yield {
-              text: `startEvent("${instr.eventName}") | OK: ${expectOnce.functionName}("${expectOnce.eventName}")`,
+              text: `startEvent("${instr.eventName}")<br>| OK: ${expectOnce.functionName}("${expectOnce.eventName}")`,
               color: 'green',
             }
             break
           } else {
             yield {
-              text: `startEvent("${instr.eventName}") | EXPECT:  ${expectOnce.functionName}("${expectOnce.eventName}")`,
+              text: `startEvent("${instr.eventName}")<br>| EXPECT:  ${expectOnce.functionName}("${expectOnce.eventName}")`,
               color: 'red',
             }
             acc.status = { done: false, passStatus: 'FAIL' }
@@ -593,7 +593,7 @@ class InstructionsManager {
         }
 
         yield {
-          text: `startEvent("${instr.eventName}") | EXPECT: No startEvent()`,
+          text: `startEvent("${instr.eventName}")<br>| EXPECT: No startEvent()`,
           color: 'red',
         }
         acc.status = { done: false, passStatus: 'FAIL' }
@@ -619,14 +619,16 @@ class InstructionsManager {
             color: 'default',
           }
         }
-        if (acc.expectEventOnceInstrs.length > 0) {
+        if (!acc.status.done && acc.expectEventOnceInstrs.length > 0) {
           yield {
-            text: `.. UNFULFILLED EXPECTS:`,
+            text: `<br>Finished with unfulfilled expects:`,
             color: 'grey',
           }
           for (const expect of acc.expectEventOnceInstrs) {
             yield {
-              text: `.... ${expect.functionName}("${expect.eventName}") | GOT: No startEvent()`,
+              text:
+                `${expect.functionName}("${expect.eventName}")<br>| ` +
+                `GOT: No startEvent("${expect.eventName}")`,
               color: 'red',
             }
             acc.status = { done: true, passStatus: 'FAIL' }
