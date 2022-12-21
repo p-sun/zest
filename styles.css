@@ -11,6 +11,11 @@
   /* width: 30em; */
 }
 
+.grid {
+  width: 30em;
+  letter-spacing: 10px;
+}
+
 .btn-group {
   display: flex;
   flex-direction: column;
@@ -39,6 +44,15 @@ body {
   padding: 1em 1em;
   background-color: #02034f;
   color: white;
+}
+
+.grid {
+  border-radius: 1em;
+  padding: 1em 1em;
+  background-color: #2a5d65;
+  color: white;
+  font-family: monospace;
+  font-size: xx-large;
 }
 
 .btn-group button {

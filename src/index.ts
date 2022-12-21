@@ -1,3 +1,4 @@
+import { GridData } from './GridData'
 import { ZTest, ZTestImpl, ZTestResult } from './Zest/ZTest'
 import {
   JestTestName,
@@ -5,6 +6,10 @@ import {
   allJestTestNames,
   allJestConfigs,
 } from './Zest/tests/ZTestExamples'
+
+function displayGridOn(element: Element, grid: GridData) {
+  element.innerHTML = grid.getText()
+}
 
 function displayButtonsOn<T extends string>(
   element: Element,
@@ -110,20 +115,35 @@ class Main {
 
 const appRoot = document.getElementsByClassName('testResults').item(0)
 const buttonsGroup = document.getElementsByClassName('btn-group').item(0)
-if (!appRoot || !buttonsGroup) {
-  throw new Error(
-    'Main HTML does not include testResults and btn-group classes'
-  )
+const gridRoot = document.getElementsByClassName('grid').item(0)
+
+if (!appRoot || !buttonsGroup || !gridRoot) {
+  throw new Error('Main HTML does not include required classes')
 }
 
 const main = new Main(appRoot, buttonsGroup)
+const gridText = new GridData({ rowCount: 4, colCount: 4 })
+displayGridOn(gridRoot, gridText)
+
 document.onkeydown = function (e) {
   switch (e.key) {
     case 'ArrowUp':
       main.selectPrevious()
+      gridText.moveSelectedCellPosIn('up')
+      displayGridOn(gridRoot, gridText)
       break
     case 'ArrowDown':
       main.selectNext()
+      gridText.moveSelectedCellPosIn('down')
+      displayGridOn(gridRoot, gridText)
+      break
+    case 'ArrowRight':
+      gridText.moveSelectedCellPosIn('right')
+      displayGridOn(gridRoot, gridText)
+      break
+    case 'ArrowLeft':
+      gridText.moveSelectedCellPosIn('left')
+      displayGridOn(gridRoot, gridText)
       break
   }
 }
