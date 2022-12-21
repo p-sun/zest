@@ -12,7 +12,7 @@ export type ZEventName = string
 
 export type ZTestStatus =
   | { done: false; passStatus: 'RUNNING' | 'FAIL' | 'INVALID' }
-  | { done: true; passStatus: 'PASS' | 'FAIL' | 'INVALID' }
+  | { done: true; passStatus: 'PASS' | 'FAIL' | 'INVALID' | 'CANCEL' }
 
 export class ZTestResult {
   constructor(
@@ -58,6 +58,7 @@ export interface ZTest {
 
   finishFrame(): ZTestResult | null
 
+  cancelTest(): void
   finishTest(): ZTestResult
   finishTestWithDelay(
     seconds: number,
@@ -122,11 +123,12 @@ export class ZTestsStoreImpl implements ZTestsStore {
   /* ---------------------------- Choose Which Test --------------------------- */
 
   startTest(testName: string): ZTest {
+    this.tests[testName]?.cancelTest()
+
     const test = new ZTestImpl(testName)
     test.addResultListener((testResult) => {
       this.updateResultListeners(testResult)
     })
-
     this.tests[testName] = test
     if (!this.currentTestData) {
       this.currentTestData = { testName, testId: test.testId }
@@ -227,7 +229,8 @@ type Line = { text: string; color: LineColor }
 
 export class ZTestImpl implements ZTest {
   readonly testId: string
-  private needsUpdate: boolean = true
+  private needsUpdate = true
+  private isCancelled = false
   private currentFrame = 0
   private instructionsMgr: InstructionsManager
   private resultListeners: ((testResult: ZTestResult) => void)[] = []
@@ -335,6 +338,14 @@ export class ZTestImpl implements ZTest {
 
   /* ---------------------------- Public Lifecycle ---------------------------- */
 
+  cancelTest() {
+    this.isCancelled = true
+    this.instructionsMgr.push({
+      functionName: 'cancelTest',
+      frame: this.currentFrame,
+    })
+  }
+
   finishTest(): ZTestResult {
     this.needsUpdate = true
     this.instructionsMgr.push({
@@ -357,13 +368,15 @@ export class ZTestImpl implements ZTest {
     })
 
     setTimeoutFn(() => {
-      this.needsUpdate = true
-      this.instructionsMgr.push({
-        functionName: 'finishTestWithDelayCallback',
-        seconds,
-        frame: this.currentFrame,
-      })
-      this.sendResultToListeners()
+      if (!this.isCancelled) {
+        this.needsUpdate = true
+        this.instructionsMgr.push({
+          functionName: 'finishTestWithDelayCallback',
+          seconds,
+          frame: this.currentFrame,
+        })
+        this.sendResultToListeners()
+      }
     }, seconds * 1000)
   }
 
@@ -421,6 +434,9 @@ type Instruction = HasFrame &
     | {
         functionName: 'finishTestWithDelayCallback'
         seconds: number
+      }
+    | {
+        functionName: 'cancelTest'
       }
     | {
         functionName: 'expectEvent'
@@ -498,7 +514,6 @@ class InstructionsManager {
     }
 
     str += WrapTextWithHorizonColorTags(strForCurrentColor, currentColor)
-
     return { text: str, status: status }
   }
 
@@ -638,6 +653,13 @@ class InstructionsManager {
             acc.status.passStatus === 'RUNNING' ? 'PASS' : acc.status.passStatus
           acc.status = { done: true, passStatus: finalStatus }
         }
+        break
+      case 'cancelTest':
+        yield {
+          text: `cancelTest()`,
+          color: 'default',
+        }
+        acc.status = { done: true, passStatus: 'CANCEL' }
         break
       case 'appendData':
         if (instr.str3) {

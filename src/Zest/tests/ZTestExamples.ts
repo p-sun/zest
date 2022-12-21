@@ -459,6 +459,33 @@ export const allJestConfigs = {
       result = test.finishFrame()
     },
   },
+
+  testFinishFrameWDelay_cancelTest: {
+    describe: 'Test Zest for canceling all ongoing listeners',
+    it: "Should have status CANCEL, and shouldn't display async finishEvent",
+    runZestTest: (test: ZTest, runJest: boolean) => {
+      if (runJest) {
+        jest.useFakeTimers()
+      }
+
+      let result: ZTestResult | null
+      test.finishTestWithDelay(1, setTimeout)
+      test.expectEvent('TriggerEnter')
+      result = test.finishFrame()
+
+      test.cancelTest()
+      result = test.finishFrame()
+      if (runJest) {
+        expect(result?.text.endsWith('cancelTest()')).toBe(true)
+      }
+
+      test.expectEvent('TriggerExit')
+      result = test.finishFrame()
+      if (runJest) {
+        expect(result?.text.endsWith('cancelTest()')).toBe(true)
+      }
+    },
+  },
 }
 
 // @ts-ignore
