@@ -1,4 +1,4 @@
-import { GridData } from './GridData'
+import { GridData } from './HorizonUtils/GridData'
 import { ZTest, ZTestImpl, ZTestResult } from './Zest/ZTest'
 import {
   JestTestName,
@@ -8,7 +8,7 @@ import {
 } from './Zest/tests/ZTestExamples'
 
 function displayGridOn(element: Element, grid: GridData) {
-  element.innerHTML = grid.getText()
+  element.innerHTML = grid.getText(false)
 }
 
 function displayButtonsOn<T extends string>(
@@ -122,7 +122,7 @@ if (!appRoot || !buttonsGroup || !gridRoot) {
 }
 
 const main = new Main(appRoot, buttonsGroup)
-const gridText = new GridData({ rowCount: 4, colCount: 4 })
+const gridText = new GridData({ rowCount: 10, colCount: 10 })
 displayGridOn(gridRoot, gridText)
 
 document.onkeydown = function (e) {
