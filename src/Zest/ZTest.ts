@@ -146,10 +146,6 @@ export class ZTestsStoreImpl implements ZTestsStore {
     if (test) {
       this.currentTestData = { testName, testId: test.testId }
       return test
-    } else {
-      console.log(
-        `ERROR: setCurrentTest called on non-existant test: ${testName}`
-      )
     }
   }
 
