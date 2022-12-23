@@ -444,18 +444,30 @@ export const allJestConfigs = {
       test.expectEvent('Collision')
       test.startEvent('Collision')
       test.startEvent('Collision')
+      test.startEvent('Collision')
+      test.startEvent('Collision')
+
       result = test.finishFrame()
       result = test.finishFrame()
       result = test.finishFrame()
 
       test.expectEvent('Collision')
       test.startEvent('Collision')
+      test.startEvent('Collision')
+      test.startEvent('Collision')
+      test.startEvent('Collision')
+
+      test.startEvent('CollisionInfo')
+      test.startEvent('CollisionInfo')
+      test.startEvent('CollisionInfo')
       result = test.finishFrame()
 
-      test.expectEvent('Collision')
-      test.startEvent('Collision')
-      test.startEvent('Collision')
-      test.startEvent('Collision')
+      test.expectEvent('CollisionInfo')
+      test.expectEvent('CollisionInfo')
+
+      test.expectEvent('CollisionInfo')
+      test.expectEvent('CollisionInfo')
+      test.expectEvent('CollisionInfo')
       result = test.finishFrame()
     },
   },

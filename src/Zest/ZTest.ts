@@ -488,28 +488,39 @@ class InstructionsManager {
 
   getHorizonString(): { text: string; status: ZTestStatus } {
     let str = ''
-    let isFirstStr = true
-    let currentColor: LineColor = 'default'
-    let strForCurrentColor = ''
-
+    let prevLine: Line = null as any
+    let prevLineCount = 1
     const { lines, status } = InstructionsManager.parseLinesForInstructions(
       this.instructions
     )
 
-    for (const line of lines) {
-      const text = (isFirstStr ? '' : '<br>') + line.text
-      isFirstStr = false
-
-      if (currentColor === line.color) {
-        strForCurrentColor += text
+    lines.forEach((line, i) => {
+      const isLineSameAsPrev =
+        prevLine && prevLine.text === line.text && prevLine.color === line.color
+      if (!prevLine) {
+        prevLine = line
+      } else if (isLineSameAsPrev) {
+        prevLineCount++
       } else {
-        str += WrapTextWithHorizonColorTags(strForCurrentColor, currentColor)
-        strForCurrentColor = text
-        currentColor = line.color
-      }
-    }
+        const openingBreak =
+          i === 0 || prevLine.text.endsWith('<br>') ? '' : '<br>'
+        if (prevLineCount > 1) {
+          str += WrapTextWithHorizonColorTags(
+            openingBreak + `Repeated ${prevLineCount}x:`,
+            'grey'
+          )
+        }
 
-    str += WrapTextWithHorizonColorTags(strForCurrentColor, currentColor)
+        const endBreak =
+          prevLineCount > 1 && !line.text.startsWith('<br>') ? '<br>' : ''
+        const text = '<br>' + prevLine.text + endBreak
+        str += WrapTextWithHorizonColorTags(text, prevLine.color)
+        prevLine = line
+        prevLineCount = 1
+      }
+    })
+
+    str += '<br>' + WrapTextWithHorizonColorTags(prevLine.text, prevLine.color)
     return { text: str, status: status }
   }
 
@@ -595,7 +606,7 @@ class InstructionsManager {
             break
           } else {
             yield {
-              text: `startEvent("${instr.eventName}")<br>| EXPECT:  ${expectOnce.functionName}("${expectOnce.eventName}")`,
+              text: `startEvent("${instr.eventName}")<br>| FAIL: Expected instead ${expectOnce.functionName}("${expectOnce.eventName}")`,
               color: 'red',
             }
             acc.status = { done: false, passStatus: 'FAIL' }
@@ -604,7 +615,7 @@ class InstructionsManager {
         }
 
         yield {
-          text: `startEvent("${instr.eventName}")<br>| EXPECT: No startEvent()`,
+          text: `startEvent("${instr.eventName}")<br>| FAIL: expectEvent() should be before startEvent()`,
           color: 'red',
         }
         acc.status = { done: false, passStatus: 'FAIL' }
@@ -632,14 +643,14 @@ class InstructionsManager {
         }
         if (!acc.status.done && acc.expectEventOnceInstrs.length > 0) {
           yield {
-            text: `<br>Finished with unfulfilled expects:`,
+            text: `<br>Still waiting on startEvent():`,
             color: 'grey',
           }
           for (const expect of acc.expectEventOnceInstrs) {
             yield {
               text:
                 `${expect.functionName}("${expect.eventName}")<br>| ` +
-                `GOT: No startEvent("${expect.eventName}")`,
+                `FAIL: startEvent() should follow expectEvent()`,
               color: 'red',
             }
             acc.status = { done: true, passStatus: 'FAIL' }
