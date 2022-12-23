@@ -610,19 +610,18 @@ class InstructionsManager {
             }
             break
           } else {
-            const status = expectOnce.isWarn ? 'WARN' : 'FAIL'
+            const { color, passStatus } = this._colorStatusForFailedLine(
+              expectOnce.isWarn
+            )
             yield {
               text:
                 `startEvent("${instr.eventName}")` +
-                `<br>| ${status}: Event name does not match expectEvent("${expectOnce.eventName}").`,
-              color: expectOnce.isWarn ? 'yellow' : 'red',
+                `<br>| ${passStatus}: Event name does not match expectEvent("${expectOnce.eventName}").`,
+              color,
             }
 
             if (acc.status.passStatus === 'RUNNING') {
-              acc.status = {
-                done: false,
-                passStatus: expectOnce.isWarn ? 'WARN' : 'FAIL',
-              }
+              acc.status = { done: false, passStatus }
             }
             break
           }
@@ -668,25 +667,22 @@ class InstructionsManager {
             text: `<br>Still waiting on startEvent():`,
             color: 'grey',
           }
-          {
-            let isWarn0 =
-              acc.status.passStatus === 'RUNNING' ||
-              acc.status.passStatus === 'WARN'
-            for (const expect of acc.expectEventOnceInstrs) {
-              isWarn0 = isWarn0 && expect.isWarn
-              const color = expect.isWarn ? 'yellow' : 'red'
-              const errorStatus = expect.isWarn ? 'WARN' : 'FAIL'
+          for (const expect of acc.expectEventOnceInstrs) {
+            const { color, passStatus } = this._colorStatusForFailedLine(
+              expect.isWarn
+            )
+            yield {
+              text:
+                `${expect.functionName}("${expect.eventName}")` +
+                `<br>| ${passStatus}: Still waiting for startEvent("${expect.eventName}")`,
+              color,
+            }
 
-              yield {
-                text:
-                  `${expect.functionName}("${expect.eventName}")` +
-                  `<br>| ${errorStatus}: Still waiting for startEvent("${expect.eventName}")`,
-                color,
-              }
-            }
-            if (acc.status.passStatus === 'RUNNING') {
-              acc.status = { done: true, passStatus: isWarn0 ? 'WARN' : 'FAIL' }
-            }
+            acc.status = this._newStatusForFailedLine(
+              true,
+              expect.isWarn,
+              acc.status
+            )
           }
         } else {
           const finalStatus =
@@ -752,11 +748,17 @@ class InstructionsManager {
             instr.isWarn
           )
           if (!isExpected && !acc.status.done) {
+            this._newStatusForFailedLine({
+              done: false,
+              passStatus: instr.isWarn ? 'WARN' : 'FAIL',
+            })
+
             const isWarn =
               (acc.status.passStatus === 'RUNNING' ||
                 acc.status.passStatus === 'WARN') &&
               instr.isWarn
-            acc.status = { done: false, passStatus: isWarn ? 'WARN' : 'FAIL' }
+            const { passStatus } = this._colorStatusForFailedLine(isWarn)
+            acc.status = { done: false, passStatus }
           }
         }
         break
@@ -789,16 +791,45 @@ class InstructionsManager {
     )
   }
 
+  // Given the status for a single line and current status, return the new status
+  static _newStatusForFailedLine(
+    lineIsDone: boolean,
+    lineIsWarn: boolean,
+    currentStatus: ZTestStatus
+  ): ZTestStatus {
+    const { done: cDone, passStatus: cStatus } = currentStatus
+    const done = cDone || lineIsDone
+    const isWarn = lineIsWarn && (cStatus === 'RUNNING' || cStatus === 'WARN')
+    let passStatus: ZTestStatus['passStatus'] = isWarn ? 'WARN' : 'FAIL'
+    return { done, passStatus }
+  }
+
   static _lineForIsExpected(
     isExpected: boolean,
     text: string,
     isWarn: boolean
   ): Line {
-    const color = isExpected ? 'green' : isWarn ? 'yellow' : 'red'
-    const status = isExpected ? 'OK' : isWarn ? 'WARN' : 'FAIL'
+    const { color, passStatus } = this._colorStatus(isExpected, isWarn)
+    return { text: `${text} | ${passStatus}`, color }
+  }
+
+  static _colorStatus(
+    isExpected: boolean,
+    isWarn: boolean
+  ): { passStatus: ZTestStatus['passStatus']; color: LineColor } {
+    if (isExpected) {
+      return { color: 'green', passStatus: 'PASS' }
+    }
+    return this._colorStatusForFailedLine(isWarn)
+  }
+
+  static _colorStatusForFailedLine(isWarn: boolean): {
+    passStatus: 'WARN' | 'FAIL'
+    color: LineColor
+  } {
     return {
-      text: `${text} | ${status}`,
-      color,
+      color: isWarn ? 'yellow' : 'red',
+      passStatus: isWarn ? 'WARN' : 'FAIL',
     }
   }
 }

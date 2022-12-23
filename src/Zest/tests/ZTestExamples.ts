@@ -483,8 +483,6 @@ export const allJestConfigs = {
 
       test.expectEvent('CollisionInfo')
       test.expectEvent('CollisionInfo')
-      test.expectEvent('CollisionInfo')
-      test.expectEvent('CollisionInfo')
 
       result = test.finishFrame()
     },
@@ -524,7 +522,6 @@ export const allJestConfigs = {
 
       let result: ZTestResult | null
       test.finishTestWithDelay(0.8, setTimeout)
-
       test.expectEvent('Collision', true)
       test.startEvent('Collision', true)
       test.startEvent('Collision', true)
@@ -544,7 +541,6 @@ export const allJestConfigs = {
       test.expectEvent('CollisionInfo', true)
       result = test.finishFrame()
 
-      test.expectEvent('CollisionInfo', true)
       test.expectEvent('CollisionInfo', true)
 
       result = test.finishFrame()
