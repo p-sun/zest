@@ -475,15 +475,9 @@ export const allJestConfigs = {
 
       test.cancelTest()
       result = test.finishFrame()
-      if (runJest) {
-        expect(result?.text.endsWith('cancelTest()')).toBe(true)
-      }
 
       test.expectEvent('TriggerExit')
       result = test.finishFrame()
-      if (runJest) {
-        expect(result?.text.endsWith('cancelTest()')).toBe(true)
-      }
     },
   },
 }

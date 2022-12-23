@@ -1,3 +1,39 @@
+import { ZTestStatus } from '../Zest/ZTest'
+
+/* -------------------------------------------------------------------------- */
+/*                         Specific to Collision World                        */
+/* -------------------------------------------------------------------------- */
+
+export const myGridSize: GridSize = { rowCount: 18, colCount: 18 }
+
+export function CharLabelForRow(row: number) {
+  return CharLabelForIndex(row, 18, true) // Uppercase First
+}
+
+export function CharLabelForColumn(row: number) {
+  return CharLabelForIndex(row, 18, true) // Lowercase First
+}
+
+/* -------------------------------------------------------------------------- */
+/*                           GridData + Zest                                  */
+/* -------------------------------------------------------------------------- */
+
+export function CharForPassStatus(passStatus: string): string | undefined {
+  const status = <ZTestStatus['passStatus']>passStatus
+  switch (status) {
+    case 'RUNNING':
+      return '~'
+    case 'PASS':
+      return 'O'
+    case 'FAIL':
+      return 'X'
+    case 'INVALID':
+      return 'I'
+    case 'CANCEL':
+      return 'C'
+  }
+}
+
 /* -------------------------------------------------------------------------- */
 /*                                 GridData.ts                                */
 /* -------------------------------------------------------------------------- */
@@ -14,14 +50,6 @@ export type CellPosition = {
 
 export function CellPositionEqual(a: CellPosition, b: CellPosition) {
   return a.row === b.row && a.column === b.column
-}
-
-export function CharLabelForRow(row: number) {
-  return String.fromCharCode(65 + row) // Uppercase
-}
-
-export function CharLabelForColumn(n: number) {
-  return n > 17 ? String.fromCharCode(65 + n) : String.fromCharCode(97 + n)
 }
 
 export type Direction = 'up' | 'down' | 'left' | 'right'
@@ -152,4 +180,41 @@ export class GridData {
     const closeTag = isHorizon ? '</color>' : '</text>'
     return openTag + str + closeTag
   }
+}
+
+/* -------------------------------------------------------------------------- */
+/*                             GridData Text Utils                            */
+/* -------------------------------------------------------------------------- */
+
+// Returns single readable char representation of an number:
+// [a-z][A-Z], for a max of 52 characters
+/*
+CharLabelForIndex(0, 26) // a
+CharLabelForIndex(25, 26) // z
+CharLabelForIndex(26, 26) // A
+CharLabelForIndex(26 * 2 - 1, 26) // Z
+CharLabelForIndex(52, 26) // +
+CharLabelForIndex(0, 18) // a
+CharLabelForIndex(1, 18) // b
+CharLabelForIndex(17, 18) // r
+CharLabelForIndex(18, 18) // A
+CharLabelForIndex(18 * 2 - 1, 18) // R
+ */
+function CharLabelForIndex(
+  n: number,
+  restartLettersAtN: number,
+  lowercaseFirst: boolean = false
+) {
+  if (n >= restartLettersAtN * 2) {
+    console.log(
+      `ERROR: expected n < restartAt. Got n:${n}, restartAtN: ${restartLettersAtN}`
+    )
+    return '+'
+  }
+
+  const firstA = lowercaseFirst ? 97 : 65
+  const secondA = lowercaseFirst ? 65 : 97
+  return n < restartLettersAtN
+    ? String.fromCharCode(firstA + n)
+    : String.fromCharCode(secondA + n - restartLettersAtN)
 }
