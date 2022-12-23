@@ -27,10 +27,12 @@ export function CharForPassStatus(passStatus: string): string | undefined {
       return 'O'
     case 'FAIL':
       return 'X'
+    case 'WARN':
+      return 'w'
     case 'INVALID':
-      return 'I'
+      return 'i'
     case 'CANCEL':
-      return 'C'
+      return 'c'
   }
 }
 

@@ -576,6 +576,27 @@ export const allJestConfigs = {
       result = test.finishFrame()
     },
   },
+
+  testFinishFrameWDelay_invalidateTest: {
+    describe: 'Test Zest for canceling all ongoing listeners',
+    it: "Should have status INVALID, and shouldn't display async finishEvent",
+    runZestTest: (test: ZTest, runJest: boolean) => {
+      if (runJest) {
+        jest.useFakeTimers()
+      }
+
+      let result: ZTestResult | null
+      test.finishTestWithDelay(1, setTimeout)
+      test.expectEvent('TriggerEnter')
+      result = test.finishFrame()
+
+      test.cancelTest()
+      result = test.finishFrame()
+
+      test.expectEvent('TriggerExit')
+      result = test.finishFrame()
+    },
+  },
 }
 
 // @ts-ignore

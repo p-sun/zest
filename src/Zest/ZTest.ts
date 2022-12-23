@@ -63,12 +63,14 @@ export interface ZTest {
 
   finishFrame(): ZTestResult | null
 
-  cancelTest(): void
   finishTest(): ZTestResult
   finishTestWithDelay(
     seconds: number,
     setTimeoutFn: (callback: () => void, timeout?: number) => number
   ): void
+
+  cancelTest(): void
+  invalidateTest(): void
 
   getTestResult(): ZTestResult
   addResultListener(updateResult: (testResult: ZTestResult) => void): void
@@ -361,14 +363,6 @@ export class ZTestImpl implements ZTest {
 
   /* ---------------------------- Public Lifecycle ---------------------------- */
 
-  cancelTest() {
-    this.isCancelled = true
-    this.instructionsMgr.push({
-      functionName: 'cancelTest',
-      frame: this.currentFrame,
-    })
-  }
-
   finishTest(): ZTestResult {
     this.needsUpdate = true
     this.instructionsMgr.push({
@@ -401,6 +395,22 @@ export class ZTestImpl implements ZTest {
         this.sendResultToListeners()
       }
     }, seconds * 1000)
+  }
+
+  cancelTest() {
+    this.isCancelled = true
+    this.instructionsMgr.push({
+      functionName: 'cancelTest',
+      frame: this.currentFrame,
+    })
+  }
+
+  invalidateTest() {
+    this.isCancelled = true
+    this.instructionsMgr.push({
+      functionName: 'invalidateTest',
+      frame: this.currentFrame,
+    })
   }
 
   finishFrame(): ZTestResult | null {
@@ -460,6 +470,9 @@ type Instruction = HasFrame &
       }
     | {
         functionName: 'cancelTest'
+      }
+    | {
+        functionName: 'invalidateTest'
       }
     | {
         functionName: 'expectEvent'
@@ -747,6 +760,13 @@ class InstructionsManager {
           color: 'default',
         }
         acc.status = { done: true, passStatus: 'CANCEL' }
+        break
+      case 'invalidateTest':
+        yield {
+          text: `invalidateTest()`,
+          color: 'default',
+        }
+        acc.status = { done: true, passStatus: 'INVALID' }
         break
       case 'appendData':
         if (instr.str3) {
