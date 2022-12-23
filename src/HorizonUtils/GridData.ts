@@ -16,11 +16,11 @@ export function CellPositionEqual(a: CellPosition, b: CellPosition) {
   return a.row === b.row && a.column === b.column
 }
 
-export function GridLabelForRow(n: number) {
-  return String.fromCharCode(65 + n) // Uppercase
+export function CharLabelForRow(row: number) {
+  return String.fromCharCode(65 + row) // Uppercase
 }
 
-export function GridLabelForColumn(n: number) {
+export function CharLabelForColumn(n: number) {
   return n > 17 ? String.fromCharCode(65 + n) : String.fromCharCode(97 + n)
 }
 
@@ -36,6 +36,10 @@ export class GridData {
       .map(() => Array(size.colCount).fill('-'))
   }
 
+  get selectedCellPos() {
+    return Object.assign({}, this.selectedPos)
+  }
+
   selectCellPosition(cellPos: CellPosition) {
     this.selectedPos = cellPos
   }
@@ -45,7 +49,7 @@ export class GridData {
   }
 
   setCharAt(cellPos: CellPosition, char: string) {
-    if (char.length > 1) {
+    if (char.length === 1) {
       this.gridData[cellPos.row][cellPos.column] = char
     } else {
       console.log(
@@ -55,9 +59,9 @@ export class GridData {
   }
 
   getText(isHorizon: boolean = true): string {
-    let twoSpaces = isHorizon ? '  ' : '..'
-    let str = '<mspace=4.8em><mark=#00000000>' + twoSpaces
-    str += this._columnHeaders()
+    let str = '<align=left><mspace=4.8em><mark=#00000000>'
+    const twoSpaces = isHorizon ? '  ' : '..'
+    str += twoSpaces + this._columnHeaders(isHorizon)
     // Add an extra char to account for the '|' at the end
     // of other lines, since Horizon Text is center aligned
     str += '<color=#00000000>.</color>'
@@ -65,16 +69,23 @@ export class GridData {
 
     this.forEachCell((cellPos) => {
       if (cellPos.column === 0) {
-        str += '<br>' + GridLabelForRow(cellPos.row) + '|'
+        const label = CharLabelForRow(cellPos.row)
+        const isSelectedRow = cellPos.row === this.selectedPos.row
+        const gridLabelWTags = isSelectedRow
+          ? this._yellowTextTags(label, isHorizon)
+          : label
+        str += '<br>' + gridLabelWTags + '|'
       }
+
+      const cellDataChar = this.gridData[cellPos.row][cellPos.column]
+
       const isSelectedCell = CellPositionEqual(cellPos, this.selectedPos)
       if (isSelectedCell) {
-        str += '<mark=#ffff0088>' // `<text style="color:yellow">` //
+        str += this._yellowHighlightTags(cellDataChar, isHorizon)
+      } else {
+        str += cellDataChar
       }
-      str += this.gridData[cellPos.row][cellPos.column]
-      if (isSelectedCell) {
-        str += '<mark=#00000000>' // '</text>'
-      }
+
       if (cellPos.column === this.size.colCount - 1) {
         str += '|'
       }
@@ -113,11 +124,32 @@ export class GridData {
     }
   }
 
-  private _columnHeaders() {
+  private _columnHeaders(isHorizon: boolean) {
+    let { column } = this.selectedPos
     let columnNames = ''
     for (let i = 0; i < this.size.colCount; i++) {
-      columnNames += GridLabelForColumn(i)
+      const columnLabel = CharLabelForColumn(i)
+      columnNames +=
+        column === i
+          ? this._yellowTextTags(columnLabel, isHorizon)
+          : columnLabel
     }
     return columnNames
+  }
+
+  private _yellowHighlightTags(str: string, isHorizon: boolean) {
+    const openTag = isHorizon
+      ? '<mark=#ffff0088>'
+      : `<text style="color:yellow">`
+    const closeTag = isHorizon ? '<mark=#00000000>' : '</text>'
+    return openTag + str + closeTag
+  }
+
+  private _yellowTextTags(str: string, isHorizon: boolean) {
+    const openTag = isHorizon
+      ? '<color=#ffff00>'
+      : `<text style="color:yellow">`
+    const closeTag = isHorizon ? '</color>' : '</text>'
+    return openTag + str + closeTag
   }
 }
