@@ -113,6 +113,21 @@ class Main {
   }
 }
 
+// Prevent window from scrolling on arrow keypress
+window.addEventListener(
+  'keydown',
+  function (e) {
+    if (
+      ['Space', 'ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight'].indexOf(
+        e.code
+      ) > -1
+    ) {
+      e.preventDefault()
+    }
+  },
+  false
+)
+
 const appRoot = document.getElementsByClassName('testResults').item(0)
 const buttonsGroup = document.getElementsByClassName('btn-group').item(0)
 const gridRoot = document.getElementsByClassName('grid').item(0)
