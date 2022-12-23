@@ -7,6 +7,10 @@
   padding: 1em;
 }
 
+.testResults {
+  width: 30em;
+}
+
 .grid {
   width: 12.9em;
   letter-spacing: 10px;

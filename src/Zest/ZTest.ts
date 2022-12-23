@@ -747,18 +747,12 @@ class InstructionsManager {
             `${instr.functionName}("${instr.key}", value)`,
             instr.isWarn
           )
-          if (!isExpected && !acc.status.done) {
-            this._newStatusForFailedLine({
-              done: false,
-              passStatus: instr.isWarn ? 'WARN' : 'FAIL',
-            })
-
-            const isWarn =
-              (acc.status.passStatus === 'RUNNING' ||
-                acc.status.passStatus === 'WARN') &&
-              instr.isWarn
-            const { passStatus } = this._colorStatusForFailedLine(isWarn)
-            acc.status = { done: false, passStatus }
+          if (!isExpected) {
+            acc.status = this._newStatusForFailedLine(
+              false,
+              instr.isWarn,
+              acc.status
+            )
           }
         }
         break
