@@ -11,8 +11,8 @@ export function CreateZTestsStore(): ZTestsStore {
 export type ZEventName = string
 
 export type ZTestStatus =
-  | { done: false; passStatus: 'RUNNING' | 'FAIL' | 'INVALID' }
-  | { done: true; passStatus: 'PASS' | 'FAIL' | 'INVALID' | 'CANCEL' }
+  | { done: false; passStatus: 'RUNNING' | 'FAIL' | 'WARN' }
+  | { done: true; passStatus: 'PASS' | 'FAIL' | 'WARN' | 'INVALID' | 'CANCEL' }
 
 export class ZTestResult {
   constructor(
@@ -44,8 +44,8 @@ export interface ZTestsStore {
 export interface ZTest {
   readonly testId: string
 
-  expectEvent(eventName: ZEventName): void
-  startEvent(eventName: string): void
+  expectEvent(eventName: ZEventName, isWarn?: boolean): void
+  startEvent(eventName: string, isWarn?: boolean): void
 
   appendData(str1: string, str2?: string, str3?: string): void
   appendDataKeyValue(key: string, value: string): void
@@ -53,8 +53,11 @@ export interface ZTest {
   expectEqual(key: string, actual: string, expected: string): void
   expectNotEqual(key: string, actual: string, expected: string): void
 
-  expectNotEmpty(key: string, value: string | number | Vec3): void
-  warnNotEmpty(key: string, value: string | number | Vec3): void
+  expectNotEmpty(
+    key: string,
+    value: string | number | Vec3,
+    isWarn?: boolean
+  ): void
 
   finishFrame(): ZTestResult | null
 
@@ -211,7 +214,7 @@ function WrapTextWithHorizonColorTags(text: string, color: LineColor) {
     case 'green':
       return `<color=#6f6>${text}</color>`
     case 'yellow':
-      return `<color=#ff0>${text}</color>`
+      return `<color=#ff3>${text}</color>`
     case 'grey':
       return `<color=#ccc>${text}</color>`
     case 'default':
@@ -243,21 +246,23 @@ export class ZTestImpl implements ZTest {
 
   /* --------------------------- Event Expectations --------------------------- */
 
-  expectEvent(eventName: string) {
+  expectEvent(eventName: string, isWarn?: boolean) {
     this.needsUpdate = true
     this.instructionsMgr.push({
       functionName: 'expectEvent',
       eventName,
       frame: this.currentFrame,
+      isWarn: isWarn === true,
     })
   }
 
-  startEvent(eventName: ZEventName) {
+  startEvent(eventName: ZEventName, isWarn?: boolean) {
     this.needsUpdate = true
     this.instructionsMgr.push({
       functionName: 'startEvent',
       eventName,
       frame: this.currentFrame,
+      isWarn: isWarn === true,
     })
   }
 
@@ -310,25 +315,14 @@ export class ZTestImpl implements ZTest {
     })
   }
 
-  expectNotEmpty(key: string, value: string | number | Vec3) {
+  expectNotEmpty(key: string, value: string | number | Vec3, isWarn?: boolean) {
     this.needsUpdate = true
     this.instructionsMgr.push({
       functionName: 'expectNotEmpty',
       key,
       value,
       frame: this.currentFrame,
-      isWarn: false,
-    })
-  }
-
-  warnNotEmpty(key: string, value: string | number | Vec3) {
-    this.needsUpdate = true
-    this.instructionsMgr.push({
-      functionName: 'expectNotEmpty',
-      key,
-      value,
-      isWarn: true,
-      frame: this.currentFrame,
+      isWarn: isWarn === true,
     })
   }
 
@@ -437,10 +431,12 @@ type Instruction = HasFrame &
     | {
         functionName: 'expectEvent'
         eventName: ZEventName
+        isWarn: boolean
       }
     | {
         functionName: 'startEvent'
         eventName: ZEventName
+        isWarn: boolean
       }
     | {
         functionName: 'appendDataKeyValue'
@@ -481,10 +477,17 @@ type InstructionsAcc = {
     functionName: 'expectEvent'
   })[]
 }
+
 class InstructionsManager {
   private instructions: Instruction[] = []
 
   constructor(public readonly testName: string) {}
+
+  /* ---------------------------- Public Lifecycle ---------------------------- */
+
+  push(instruction: Instruction) {
+    this.instructions.push(instruction)
+  }
 
   getHorizonString(): { text: string; status: ZTestStatus } {
     let str = ''
@@ -520,14 +523,13 @@ class InstructionsManager {
       }
     })
 
+    if (prevLineCount > 1) {
+      str +=
+        '<br>' +
+        WrapTextWithHorizonColorTags(`Repeated ${prevLineCount}x:`, 'grey')
+    }
     str += '<br>' + WrapTextWithHorizonColorTags(prevLine.text, prevLine.color)
     return { text: str, status: status }
-  }
-
-  /* ---------------------------- Public Lifecycle ---------------------------- */
-
-  push(instruction: Instruction) {
-    this.instructions.push(instruction)
   }
 
   /* ------------------------------ Parse Results ----------------------------- */
@@ -566,6 +568,8 @@ class InstructionsManager {
           ? 'green'
           : accumulator.status.passStatus === 'FAIL'
           ? 'red'
+          : accumulator.status.passStatus === 'WARN'
+          ? 'yellow'
           : 'grey',
     }
 
@@ -591,7 +595,6 @@ class InstructionsManager {
           text: `${instr.functionName}("${instr.eventName}")`,
           color: 'default',
         }
-
         acc.expectEventOnceInstrs.push(instr)
         break
 
@@ -600,26 +603,45 @@ class InstructionsManager {
         if (expectOnce) {
           if (instr.eventName === expectOnce.eventName) {
             yield {
-              text: `startEvent("${instr.eventName}")<br>| OK: ${expectOnce.functionName}("${expectOnce.eventName}")`,
+              text:
+                `startEvent("${instr.eventName}")` +
+                `<br>| OK: ${expectOnce.functionName}("${expectOnce.eventName}")`,
               color: 'green',
             }
             break
           } else {
+            const status = expectOnce.isWarn ? 'WARN' : 'FAIL'
             yield {
-              text: `startEvent("${instr.eventName}")<br>| FAIL: Expected instead ${expectOnce.functionName}("${expectOnce.eventName}")`,
-              color: 'red',
+              text:
+                `startEvent("${instr.eventName}")` +
+                `<br>| ${status}: Event name does not match expectEvent("${expectOnce.eventName}").`,
+              color: expectOnce.isWarn ? 'yellow' : 'red',
             }
-            acc.status = { done: false, passStatus: 'FAIL' }
+
+            if (acc.status.passStatus === 'RUNNING') {
+              acc.status = {
+                done: false,
+                passStatus: expectOnce.isWarn ? 'WARN' : 'FAIL',
+              }
+            }
             break
           }
         }
 
-        yield {
-          text: `startEvent("${instr.eventName}")<br>| FAIL: expectEvent() should be before startEvent()`,
-          color: 'red',
-        }
-        acc.status = { done: false, passStatus: 'FAIL' }
+        const errorStatus = instr.isWarn ? 'WARN' : 'FAIL'
 
+        yield {
+          text:
+            `startEvent("${instr.eventName}")` +
+            `<br>| ${errorStatus}: Did not get expectEvent() before startEvent().`,
+          color: instr.isWarn ? 'yellow' : 'red',
+        }
+        if (acc.status.passStatus === 'RUNNING') {
+          acc.status = {
+            done: false,
+            passStatus: instr.isWarn ? 'WARN' : 'FAIL',
+          }
+        }
         break
 
       case 'finishTestWithDelay':
@@ -646,14 +668,25 @@ class InstructionsManager {
             text: `<br>Still waiting on startEvent():`,
             color: 'grey',
           }
-          for (const expect of acc.expectEventOnceInstrs) {
-            yield {
-              text:
-                `${expect.functionName}("${expect.eventName}")<br>| ` +
-                `FAIL: startEvent() should follow expectEvent()`,
-              color: 'red',
+          {
+            let isWarn0 =
+              acc.status.passStatus === 'RUNNING' ||
+              acc.status.passStatus === 'WARN'
+            for (const expect of acc.expectEventOnceInstrs) {
+              isWarn0 = isWarn0 && expect.isWarn
+              const color = expect.isWarn ? 'yellow' : 'red'
+              const errorStatus = expect.isWarn ? 'WARN' : 'FAIL'
+
+              yield {
+                text:
+                  `${expect.functionName}("${expect.eventName}")` +
+                  `<br>| ${errorStatus}: Still waiting for startEvent("${expect.eventName}")`,
+                color,
+              }
             }
-            acc.status = { done: true, passStatus: 'FAIL' }
+            if (acc.status.passStatus === 'RUNNING') {
+              acc.status = { done: true, passStatus: isWarn0 ? 'WARN' : 'FAIL' }
+            }
           }
         } else {
           const finalStatus =
@@ -715,11 +748,15 @@ class InstructionsManager {
           }
           yield this._lineForIsExpected(
             isExpected,
-            instr.isWarn,
-            `${instr.functionName}("${instr.key}", value)`
+            `${instr.functionName}("${instr.key}", value)`,
+            instr.isWarn
           )
-          if (!isExpected) {
-            acc.status = { done: false, passStatus: 'FAIL' }
+          if (!isExpected && !acc.status.done) {
+            const isWarn =
+              (acc.status.passStatus === 'RUNNING' ||
+                acc.status.passStatus === 'WARN') &&
+              instr.isWarn
+            acc.status = { done: false, passStatus: isWarn ? 'WARN' : 'FAIL' }
           }
         }
         break
@@ -747,15 +784,15 @@ class InstructionsManager {
 
     return this._lineForIsExpected(
       isExpected,
-      instr.isWarn,
-      `${instr.functionName}("${instr.key}", ${valueStr}, ${expValStr})`
+      `${instr.functionName}("${instr.key}", ${valueStr}, ${expValStr})`,
+      instr.isWarn
     )
   }
 
   static _lineForIsExpected(
     isExpected: boolean,
-    isWarn: boolean,
-    text: string
+    text: string,
+    isWarn: boolean
   ): Line {
     const color = isExpected ? 'green' : isWarn ? 'yellow' : 'red'
     const status = isExpected ? 'OK' : isWarn ? 'WARN' : 'FAIL'

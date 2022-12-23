@@ -32,22 +32,43 @@ export const allJestConfigs = {
 
       test.expectNotEmpty('notZeroNumKey', 99)
       test.expectNotEmpty('zeroNumKey', 0)
-      test.warnNotEmpty('notZeroVecKey', 99)
-      test.warnNotEmpty('zeroNumKey', 0)
+      test.expectNotEmpty('notZeroVecKey', 99, true)
+      test.expectNotEmpty('zeroNumKey', 0, true)
       test.finishFrame()
 
       test.expectNotEmpty('notZeroVecKey', new Vec3(8, 2, 1))
       test.expectNotEmpty('zeroVecKey', Vec3.zero)
-      test.warnNotEmpty('notZeroVecKey', new Vec3(8, 2, 1))
-      test.warnNotEmpty('zeroVecKey', Vec3.zero)
+      test.expectNotEmpty('notZeroVecKey', new Vec3(8, 2, 1), true)
+      test.expectNotEmpty('zeroVecKey', Vec3.zero, true)
       test.finishFrame()
 
       test.expectNotEmpty('notZeroKey', 'notZeroStr')
       test.expectNotEmpty('zeroStrKey', '0')
       test.expectNotEmpty('emptyStrKey', '')
-      test.warnNotEmpty('notZeroKey', 'notZeroStr')
-      test.warnNotEmpty('zeroStrKey', '0')
-      test.warnNotEmpty('emptyStrKey', '')
+      test.expectNotEmpty('notZeroKey', 'notZeroStr', true)
+      test.expectNotEmpty('zeroStrKey', '0', true)
+      test.expectNotEmpty('emptyStrKey', '', true)
+      test.finishFrame()
+    },
+  },
+
+  testValueExpectations_warnsOnly: {
+    describe: 'when expecting keys with only warns',
+    it: 'should result in passStatus of WARN',
+    runZestTest: (test: ZTest, runJest: boolean) => {
+      test.finishFrame()
+
+      test.expectNotEmpty('notZeroVecKey', 99, true)
+      test.expectNotEmpty('zeroNumKey', 0, true)
+      test.finishFrame()
+
+      test.expectNotEmpty('notZeroVecKey', new Vec3(8, 2, 1), true)
+      test.expectNotEmpty('zeroVecKey', Vec3.zero, true)
+      test.finishFrame()
+
+      test.expectNotEmpty('notZeroKey', 'notZeroStr', true)
+      test.expectNotEmpty('zeroStrKey', '0', true)
+      test.expectNotEmpty('emptyStrKey', '', true)
       test.finishFrame()
     },
   },
@@ -451,24 +472,91 @@ export const allJestConfigs = {
       result = test.finishFrame()
       result = test.finishFrame()
 
+      test.startEvent('CollisionInfo')
+      test.startEvent('CollisionInfo')
+      test.startEvent('CollisionInfo')
+
+      test.expectEvent('CollisionInfo')
+      test.expectEvent('CollisionInfo')
+      test.expectEvent('CollisionInfo')
+      result = test.finishFrame()
+
+      test.expectEvent('CollisionInfo')
+      test.expectEvent('CollisionInfo')
+      test.expectEvent('CollisionInfo')
+      test.expectEvent('CollisionInfo')
+
+      result = test.finishFrame()
+    },
+  },
+
+  testMultipleExpectEvents_waitingOnExpectEvents: {
+    describe: 'Test Zest for multiple expects in a row',
+    it: 'Should display that lines repeated 3, 2, 4 times',
+    runZestTest: (test: ZTest, runJest: boolean) => {
+      if (runJest) {
+        jest.useFakeTimers()
+      }
+
+      let result: ZTestResult | null
+      test.finishTestWithDelay(0.8, setTimeout)
       test.expectEvent('Collision')
-      test.startEvent('Collision')
-      test.startEvent('Collision')
-      test.startEvent('Collision')
-      test.startEvent('Collision')
+      test.expectEvent('Collision')
+      test.expectEvent('Collision')
 
-      test.startEvent('CollisionInfo')
-      test.startEvent('CollisionInfo')
-      test.startEvent('CollisionInfo')
+      test.expectEvent('CollisionInfo')
+      test.expectEvent('CollisionInfo')
+
+      test.expectEvent('Collision')
+      test.expectEvent('Collision')
+      test.expectEvent('Collision')
+      test.expectEvent('Collision')
+    },
+  },
+
+  testCombo_collisions_multipleEventsWarn: {
+    describe: 'Test Zest for warnings per frame',
+    it: 'Should have status of WARN',
+    runZestTest: (test: ZTest, runJest: boolean) => {
+      if (runJest) {
+        jest.useFakeTimers()
+      }
+
+      let result: ZTestResult | null
+      test.finishTestWithDelay(0.8, setTimeout)
+
+      test.expectEvent('Collision', true)
+      test.startEvent('Collision', true)
+      test.startEvent('Collision', true)
+      test.startEvent('Collision', true)
+      test.startEvent('Collision', true)
+
+      result = test.finishFrame()
+      result = test.finishFrame()
       result = test.finishFrame()
 
-      test.expectEvent('CollisionInfo')
-      test.expectEvent('CollisionInfo')
+      test.startEvent('CollisionInfo', true)
+      test.startEvent('CollisionInfo', true)
+      test.startEvent('CollisionInfo', true)
 
-      test.expectEvent('CollisionInfo')
-      test.expectEvent('CollisionInfo')
-      test.expectEvent('CollisionInfo')
+      test.expectEvent('CollisionInfo', true)
+      test.expectEvent('CollisionInfo', true)
+      test.expectEvent('CollisionInfo', true)
       result = test.finishFrame()
+
+      test.expectEvent('CollisionInfo', true)
+      test.expectEvent('CollisionInfo', true)
+
+      result = test.finishFrame()
+      test.expectEvent('Collision', true)
+      test.startEvent('Collision', true)
+      test.startEvent('Collision', true)
+      test.startEvent('Collision', true)
+      test.startEvent('Collision', true)
+      result = test.finishFrame()
+      if (runJest) {
+        expect(result?.status.passStatus).toBe('WARN')
+      }
     },
   },
 
