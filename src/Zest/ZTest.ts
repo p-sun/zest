@@ -680,7 +680,7 @@ class InstructionsManager {
             yield {
               text:
                 `${instr.functionName}("${instr.eventName}")` +
-                `<br>| ${passStatus}: Event name does not match ${expectOnce.functionName}("${expectOnce.eventName}").`,
+                `<br>| ${passStatus}: Expected "${expectOnce.eventName}".`,
               color,
             }
 
@@ -738,7 +738,7 @@ class InstructionsManager {
             yield {
               text:
                 `${expect.functionName}("${expect.eventName}")` +
-                `<br>| ${passStatus}: Did not get startEvent() for "${expect.eventName}"`,
+                `<br>| ${passStatus}: Waiting on startEvent("${expect.eventName}")`,
               color,
             }
 
