@@ -32,22 +32,22 @@ export const allJestConfigs = {
 
       test.expectNotEmpty('notZeroNumKey', 99)
       test.expectNotEmpty('zeroNumKey', 0)
-      test.expectNotEmpty('notZeroVecKey', 99, true)
-      test.expectNotEmpty('zeroNumKey', 0, true)
+      test.expectNotEmptyW('notZeroVecKey', 99)
+      test.expectNotEmptyW('zeroNumKey', 0)
       test.finishFrame()
 
       test.expectNotEmpty('notZeroVecKey', new Vec3(8, 2, 1))
       test.expectNotEmpty('zeroVecKey', Vec3.zero)
-      test.expectNotEmpty('notZeroVecKey', new Vec3(8, 2, 1), true)
-      test.expectNotEmpty('zeroVecKey', Vec3.zero, true)
+      test.expectNotEmptyW('notZeroVecKey', new Vec3(8, 2, 1))
+      test.expectNotEmptyW('zeroVecKey', Vec3.zero)
       test.finishFrame()
 
       test.expectNotEmpty('notZeroKey', 'notZeroStr')
       test.expectNotEmpty('zeroStrKey', '0')
       test.expectNotEmpty('emptyStrKey', '')
-      test.expectNotEmpty('notZeroKey', 'notZeroStr', true)
-      test.expectNotEmpty('zeroStrKey', '0', true)
-      test.expectNotEmpty('emptyStrKey', '', true)
+      test.expectNotEmptyW('notZeroKey', 'notZeroStr')
+      test.expectNotEmptyW('zeroStrKey', '0')
+      test.expectNotEmptyW('emptyStrKey', '')
       test.finishFrame()
     },
   },
@@ -58,17 +58,17 @@ export const allJestConfigs = {
     runZestTest: (test: ZTest, runJest: boolean) => {
       test.finishFrame()
 
-      test.expectNotEmpty('notZeroVecKey', 99, true)
-      test.expectNotEmpty('zeroNumKey', 0, true)
+      test.expectNotEmptyW('notZeroVecKey', 99)
+      test.expectNotEmptyW('zeroNumKey', 0)
       test.finishFrame()
 
-      test.expectNotEmpty('notZeroVecKey', new Vec3(8, 2, 1), true)
-      test.expectNotEmpty('zeroVecKey', Vec3.zero, true)
+      test.expectNotEmptyW('notZeroVecKey', new Vec3(8, 2, 1))
+      test.expectNotEmptyW('zeroVecKey', Vec3.zero)
       test.finishFrame()
 
-      test.expectNotEmpty('notZeroKey', 'notZeroStr', true)
-      test.expectNotEmpty('zeroStrKey', '0', true)
-      test.expectNotEmpty('emptyStrKey', '', true)
+      test.expectNotEmptyW('notZeroKey', 'notZeroStr')
+      test.expectNotEmptyW('zeroStrKey', '0')
+      test.expectNotEmptyW('emptyStrKey', '')
       test.finishFrame()
     },
   },
@@ -522,33 +522,33 @@ export const allJestConfigs = {
 
       let result: ZTestResult | null
       test.finishTestWithDelay(0.8, setTimeout)
-      test.expectEvent('Collision', true)
-      test.startEvent('Collision', true)
-      test.startEvent('Collision', true)
-      test.startEvent('Collision', true)
-      test.startEvent('Collision', true)
+      test.expectEventW('Collision')
+      test.startEventW('Collision')
+      test.startEventW('Collision')
+      test.startEventW('Collision')
+      test.startEventW('Collision')
 
       result = test.finishFrame()
       result = test.finishFrame()
       result = test.finishFrame()
 
-      test.startEvent('CollisionInfo', true)
-      test.startEvent('CollisionInfo', true)
-      test.startEvent('CollisionInfo', true)
+      test.startEventW('CollisionInfo')
+      test.startEventW('CollisionInfo')
+      test.startEventW('CollisionInfo')
 
-      test.expectEvent('CollisionInfo', true)
-      test.expectEvent('CollisionInfo', true)
-      test.expectEvent('CollisionInfo', true)
+      test.expectEventW('CollisionInfo')
+      test.expectEventW('CollisionInfo')
+      test.expectEventW('CollisionInfo')
       result = test.finishFrame()
 
-      test.expectEvent('CollisionInfo', true)
+      test.expectEventW('CollisionInfo')
 
       result = test.finishFrame()
-      test.expectEvent('Collision', true)
-      test.startEvent('Collision', true)
-      test.startEvent('Collision', true)
-      test.startEvent('Collision', true)
-      test.startEvent('Collision', true)
+      test.expectEventW('Collision')
+      test.startEventW('Collision')
+      test.startEventW('Collision')
+      test.startEventW('Collision')
+      test.startEventW('Collision')
       result = test.finishFrame()
       if (runJest) {
         expect(result?.status.passStatus).toBe('WARN')

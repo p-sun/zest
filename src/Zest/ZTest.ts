@@ -44,8 +44,13 @@ export interface ZTestsStore {
 export interface ZTest {
   readonly testId: string
 
-  expectEvent(eventName: ZEventName, isWarn?: boolean): void
-  startEvent(eventName: string, isWarn?: boolean): void
+  // Warning are post-fixed with 'W',
+  // so that this API matches the codeblocks API
+  expectEvent(eventName: ZEventName): void
+  expectEventW(eventName: ZEventName): void
+
+  startEvent(eventName: string): void
+  startEventW(eventName: string): void
 
   appendData(str1: string, str2?: string, str3?: string): void
   appendDataKeyValue(key: string, value: string): void
@@ -53,11 +58,8 @@ export interface ZTest {
   expectEqual(key: string, actual: string, expected: string): void
   expectNotEqual(key: string, actual: string, expected: string): void
 
-  expectNotEmpty(
-    key: string,
-    value: string | number | Vec3,
-    isWarn?: boolean
-  ): void
+  expectNotEmpty(key: string, value: string | number | Vec3): void
+  expectNotEmptyW(key: string, value: string | number | Vec3): void
 
   finishFrame(): ZTestResult | null
 
@@ -246,23 +248,43 @@ export class ZTestImpl implements ZTest {
 
   /* --------------------------- Event Expectations --------------------------- */
 
-  expectEvent(eventName: string, isWarn?: boolean) {
+  expectEvent(eventName: string) {
     this.needsUpdate = true
     this.instructionsMgr.push({
       functionName: 'expectEvent',
       eventName,
       frame: this.currentFrame,
-      isWarn: isWarn === true,
+      isWarn: false,
     })
   }
 
-  startEvent(eventName: ZEventName, isWarn?: boolean) {
+  expectEventW(eventName: string) {
+    this.needsUpdate = true
+    this.instructionsMgr.push({
+      functionName: 'expectEventW',
+      eventName,
+      frame: this.currentFrame,
+      isWarn: true,
+    })
+  }
+
+  startEvent(eventName: ZEventName) {
     this.needsUpdate = true
     this.instructionsMgr.push({
       functionName: 'startEvent',
       eventName,
       frame: this.currentFrame,
-      isWarn: isWarn === true,
+      isWarn: false,
+    })
+  }
+
+  startEventW(eventName: ZEventName) {
+    this.needsUpdate = true
+    this.instructionsMgr.push({
+      functionName: 'startEventW',
+      eventName,
+      frame: this.currentFrame,
+      isWarn: true,
     })
   }
 
@@ -315,14 +337,25 @@ export class ZTestImpl implements ZTest {
     })
   }
 
-  expectNotEmpty(key: string, value: string | number | Vec3, isWarn?: boolean) {
+  expectNotEmpty(key: string, value: string | number | Vec3) {
     this.needsUpdate = true
     this.instructionsMgr.push({
       functionName: 'expectNotEmpty',
       key,
       value,
       frame: this.currentFrame,
-      isWarn: isWarn === true,
+      isWarn: false,
+    })
+  }
+
+  expectNotEmptyW(key: string, value: string | number | Vec3) {
+    this.needsUpdate = true
+    this.instructionsMgr.push({
+      functionName: 'expectNotEmptyW',
+      key,
+      value,
+      frame: this.currentFrame,
+      isWarn: true,
     })
   }
 
@@ -431,12 +464,22 @@ type Instruction = HasFrame &
     | {
         functionName: 'expectEvent'
         eventName: ZEventName
-        isWarn: boolean
+        isWarn: false
+      }
+    | {
+        functionName: 'expectEventW'
+        eventName: ZEventName
+        isWarn: true
       }
     | {
         functionName: 'startEvent'
         eventName: ZEventName
-        isWarn: boolean
+        isWarn: false
+      }
+    | {
+        functionName: 'startEventW'
+        eventName: ZEventName
+        isWarn: true
       }
     | {
         functionName: 'appendDataKeyValue'
@@ -467,14 +510,20 @@ type Instruction = HasFrame &
         functionName: 'expectNotEmpty'
         key: string
         value: string | number | Vec3
-        isWarn: boolean
+        isWarn: false
+      }
+    | {
+        functionName: 'expectNotEmptyW'
+        key: string
+        value: string | number | Vec3
+        isWarn: true
       }
   )
 
 type InstructionsAcc = {
   status: ZTestStatus
   expectEventOnceInstrs: (Instruction & {
-    functionName: 'expectEvent'
+    functionName: 'expectEvent' | 'expectEventW'
   })[]
 }
 
@@ -591,6 +640,7 @@ class InstructionsManager {
         break
 
       case 'expectEvent':
+      case 'expectEventW':
         yield {
           text: `${instr.functionName}("${instr.eventName}")`,
           color: 'default',
@@ -599,12 +649,13 @@ class InstructionsManager {
         break
 
       case 'startEvent':
+      case 'startEventW':
         const expectOnce = acc.expectEventOnceInstrs.shift()
         if (expectOnce) {
           if (instr.eventName === expectOnce.eventName) {
             yield {
               text:
-                `startEvent("${instr.eventName}")` +
+                `${instr.functionName}("${instr.eventName}")` +
                 `<br>| OK: ${expectOnce.functionName}("${expectOnce.eventName}")`,
               color: 'green',
             }
@@ -615,8 +666,8 @@ class InstructionsManager {
             )
             yield {
               text:
-                `startEvent("${instr.eventName}")` +
-                `<br>| ${passStatus}: Event name does not match expectEvent("${expectOnce.eventName}").`,
+                `${instr.functionName}("${instr.eventName}")` +
+                `<br>| ${passStatus}: Event name does not match ${expectOnce.functionName}("${expectOnce.eventName}").`,
               color,
             }
 
@@ -631,7 +682,7 @@ class InstructionsManager {
 
         yield {
           text:
-            `startEvent("${instr.eventName}")` +
+            `${instr.functionName}("${instr.eventName}")` +
             `<br>| ${errorStatus}: Did not get expectEvent() before startEvent().`,
           color: instr.isWarn ? 'yellow' : 'red',
         }
@@ -674,7 +725,7 @@ class InstructionsManager {
             yield {
               text:
                 `${expect.functionName}("${expect.eventName}")` +
-                `<br>| ${passStatus}: Still waiting for startEvent("${expect.eventName}")`,
+                `<br>| ${passStatus}: Did not get startEvent() for "${expect.eventName}"`,
               color,
             }
 
@@ -733,6 +784,7 @@ class InstructionsManager {
         break
 
       case 'expectNotEmpty':
+      case 'expectNotEmptyW':
         {
           let isExpected = false
           if (typeof instr.value === 'number') {
@@ -742,6 +794,7 @@ class InstructionsManager {
           } else if (instr.value instanceof Vec3) {
             isExpected = !instr.value.equals(Vec3.zero)
           }
+
           yield this._lineForIsExpected(
             isExpected,
             `${instr.functionName}("${instr.key}", value)`,
