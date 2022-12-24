@@ -70,7 +70,7 @@ export interface ZTest {
   ): void
 
   cancelTest(): void
-  invalidateTest(): void
+  invalidateTest(message?: string): void
 
   getTestResult(): ZTestResult
   addResultListener(updateResult: (testResult: ZTestResult) => void): void
@@ -405,10 +405,11 @@ export class ZTestImpl implements ZTest {
     })
   }
 
-  invalidateTest() {
+  invalidateTest(message: string = '') {
     this.isCancelled = true
     this.instructionsMgr.push({
       functionName: 'invalidateTest',
+      message,
       frame: this.currentFrame,
     })
   }
@@ -473,6 +474,7 @@ type Instruction = HasFrame &
       }
     | {
         functionName: 'invalidateTest'
+        message: string
       }
     | {
         functionName: 'expectEvent'
@@ -762,8 +764,9 @@ class InstructionsManager {
         acc.status = { done: true, passStatus: 'CANCEL' }
         break
       case 'invalidateTest':
+        const msg = `"${instr.message}"`
         yield {
-          text: `invalidateTest()`,
+          text: `invalidateTest(${instr.message !== '' ? msg : ''})`,
           color: 'default',
         }
         acc.status = { done: true, passStatus: 'INVALID' }

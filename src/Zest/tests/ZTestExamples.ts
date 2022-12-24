@@ -590,7 +590,7 @@ export const allJestConfigs = {
       test.expectEvent('TriggerEnter')
       result = test.finishFrame()
 
-      test.cancelTest()
+      test.invalidateTest('Reason for invalidation')
       result = test.finishFrame()
 
       test.expectEvent('TriggerExit')
