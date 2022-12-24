@@ -766,7 +766,7 @@ class InstructionsManager {
         acc.status = { done: true, passStatus: 'INVALID' }
         break
       case 'appendData':
-        if (instr.str2) {
+        if (instr.str2 !== undefined) {
           yield {
             text: `appendData("${instr.str1}", "${instr.str2}")`,
             color: 'default',
@@ -884,4 +884,35 @@ class InstructionsManager {
       passStatus: isWarn ? 'WARN' : 'FAIL',
     }
   }
+}
+
+/* -------------------------------------------------------------------------- */
+/*                                Horizon Utils                               */
+/* -------------------------------------------------------------------------- */
+
+function SplitIntoStringsWithMaxLength(
+  str: string,
+  lineBreak: string,
+  maxLength: number
+) {
+  if (str.length <= maxLength) {
+    return [str]
+  }
+
+  let sections: string[] = []
+  let currentSection: string = ''
+
+  const lines = str.split(lineBreak)
+  lines.forEach((line, i) => {
+    if (currentSection.length + line.length > maxLength) {
+      sections.push(currentSection)
+      currentSection = line + lineBreak
+    } else {
+      const isLastLine = i === lines.length - 1
+      currentSection += line + (isLastLine ? '' : lineBreak)
+    }
+  })
+
+  sections.push(currentSection)
+  return sections
 }

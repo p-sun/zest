@@ -89,26 +89,3 @@ function WrapTextWithWidth(wrapWidth: number, str: string): string {
 
   return result
 }
-
-function SplitIntoStringsWithMaxLength(
-  str: string,
-  lineBreak: string,
-  maxLength: number
-) {
-  let sections: string[] = []
-  let currentSection: string = ''
-
-  const lines = str.split(lineBreak)
-  lines.forEach((line, i) => {
-    if (currentSection.length + line.length > maxLength) {
-      sections.push(currentSection)
-      currentSection = line + lineBreak
-    } else {
-      const isLastLine = i === lines.length - 1
-      currentSection += line + (isLastLine ? '' : lineBreak)
-    }
-  })
-
-  sections.push(currentSection)
-  return sections
-}
