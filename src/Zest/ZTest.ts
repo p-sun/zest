@@ -52,7 +52,7 @@ export interface ZTest {
   startEvent(eventName: string): void
   startEventW(eventName: string): void
 
-  appendData(str1: string, str2?: string, str3?: string): void
+  appendData(str1: string, str2?: string): void
 
   expectEqual(key: string, actual: string, expected: string): void
   expectNotEqual(key: string, actual: string, expected: string): void
@@ -291,13 +291,12 @@ export class ZTestImpl implements ZTest {
 
   /* ------------------------------- Append Data ------------------------------ */
 
-  appendData(str1: string, str2?: string, str3?: string) {
+  appendData(str1: string, str2?: string) {
     this.needsUpdate = true
     this.instructionsMgr.push({
       functionName: 'appendData',
       str1,
       str2,
-      str3,
       frame: this.currentFrame,
     })
   }
@@ -489,7 +488,6 @@ type Instruction = HasFrame &
         functionName: 'appendData'
         str1: string
         str2?: string
-        str3?: string
       }
     | {
         functionName: 'expectEqual'
@@ -756,12 +754,7 @@ class InstructionsManager {
         acc.status = { done: true, passStatus: 'INVALID' }
         break
       case 'appendData':
-        if (instr.str3) {
-          yield {
-            text: `appendData("${instr.str1}", "${instr.str2}", "${instr.str3}")`,
-            color: 'default',
-          }
-        } else if (instr.str2) {
+        if (instr.str2) {
           yield {
             text: `appendData("${instr.str1}", "${instr.str2}")`,
             color: 'default',
