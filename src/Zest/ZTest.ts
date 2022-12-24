@@ -572,9 +572,8 @@ class InstructionsManager {
           )
         }
 
-        const endBreak =
-          prevLineCount > 1 && !line.text.startsWith('<br>') ? '<br>' : ''
-        const text = '<br>' + prevLine.text + endBreak
+        //const endBreak = prevLineCount > 1 && !line.text.startsWith('<br>') ? '<br>' : ''
+        const text = '<br>' + prevLine.text // + endBreak
         str += WrapTextWithHorizonColorTags(text, prevLine.color)
         prevLine = line
         prevLineCount = 1
