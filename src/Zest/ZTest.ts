@@ -129,6 +129,11 @@ export class ZTestsStoreImpl implements ZTestsStore {
   /* ---------------------------- Choose Which Test --------------------------- */
 
   startTest(testName: string): ZTest {
+    if (testName.length === 0) {
+      console.log(
+        `ERROR in ZTestsStore: startTest must have a testName. Received: ${testName}`
+      )
+    }
     this.tests[testName]?.cancelTest()
 
     const test = new ZTestImpl(testName)
@@ -188,6 +193,13 @@ export class ZTestsStoreImpl implements ZTestsStore {
   }
 
   private updateResultListeners(testResult: ZTestResult) {
+    if (testResult.testName.length === 0) {
+      console.log(
+        'ERROR in ZTestsStoreImpl: Got no testName. Test Result: ',
+        testResult.testName,
+        testResult.testId
+      )
+    }
     const isCurrentTest = this.currentTestData?.testId === testResult.testId
 
     for (const updateResult of this.resultListeners) {

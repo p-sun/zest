@@ -4,7 +4,7 @@ import { ZTestStatus } from '../Zest/ZTest'
 /*                         Specific to Collision World                        */
 /* -------------------------------------------------------------------------- */
 
-export const myGridSize: GridSize = { rowCount: 18, colCount: 18 }
+export const myGridSize: GridSize = { rowCount: 18, colCount: 18 * 2 }
 
 export function CharLabelForRow(row: number) {
   return CharLabelForIndex(row, 18, true) // Uppercase First
@@ -26,9 +26,9 @@ export function CharForPassStatus(passStatus: string): string | undefined {
     case 'PASS':
       return 'O'
     case 'FAIL':
-      return 'X'
+      return `X`
     case 'WARN':
-      return 'w'
+      return 'n'
     case 'INVALID':
       return 'i'
     case 'CANCEL':
@@ -79,13 +79,7 @@ export class GridData {
   }
 
   setCharAt(cellPos: CellPosition, char: string) {
-    if (char.length === 1) {
-      this.gridData[cellPos.row][cellPos.column] = char
-    } else {
-      console.log(
-        `ERROR in setCharAt: expected 1 char value, but got ${char}, which has length of ${char.length}`
-      )
-    }
+    this.gridData[cellPos.row][cellPos.column] = char
   }
 
   getText(isHorizon: boolean = true): string {
