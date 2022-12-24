@@ -247,6 +247,7 @@ export const allJestConfigs = {
 
       test.appendData('String1')
       test.appendData('String1', 'String2')
+      test.appendData('String2 should be empty', '')
       test.finishFrame()
     },
   },

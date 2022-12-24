@@ -308,7 +308,7 @@ export class ZTestImpl implements ZTest {
     this.instructionsMgr.push({
       functionName: 'appendData',
       str1,
-      str2,
+      str2: str2,
       frame: this.currentFrame,
     })
   }
