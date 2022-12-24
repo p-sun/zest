@@ -71,11 +71,11 @@ function WrapTextWithWidth(wrapWidth: number, str: string): string {
     charCountOnLine = 0
     const words = line.split(' ')
     for (const word of words) {
-      if (word.length >= wrapWidth) {
-        result += '<br>' + word + '<br>'
-        charCountOnLine = 0
-      } else if (word.length > 0) {
-        if (charCountOnLine + word.length > wrapWidth) {
+      if (word.length > 0) {
+        if (word.length >= wrapWidth) {
+          result += '<br>' + word + '<br>'
+          charCountOnLine = 0
+        } else if (charCountOnLine + word.length > wrapWidth) {
           result += '<br>' + word
           charCountOnLine = word.length
         } else {
@@ -88,4 +88,27 @@ function WrapTextWithWidth(wrapWidth: number, str: string): string {
   }
 
   return result
+}
+
+function SplitIntoStringsWithMaxLength(
+  str: string,
+  lineBreak: string,
+  maxLength: number
+) {
+  let sections: string[] = []
+  let currentSection: string = ''
+
+  const lines = str.split(lineBreak)
+  lines.forEach((line, i) => {
+    if (currentSection.length + line.length > maxLength) {
+      sections.push(currentSection)
+      currentSection = line + lineBreak
+    } else {
+      const isLastLine = i === lines.length - 1
+      currentSection += line + (isLastLine ? '' : lineBreak)
+    }
+  })
+
+  sections.push(currentSection)
+  return sections
 }

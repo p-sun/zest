@@ -247,7 +247,6 @@ export const allJestConfigs = {
 
       test.appendData('String1')
       test.appendData('String1', 'String2')
-      test.appendData('String1', 'String2', 'String3')
       test.finishFrame()
     },
   },
