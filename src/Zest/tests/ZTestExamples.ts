@@ -240,9 +240,9 @@ export const allJestConfigs = {
     it: 'should display data',
     runZestTest: (test: ZTest, runJest: boolean) => {
       test.expectEvent('myEventA')
-      test.appendDataKeyValue('myKey1', 'myValue1')
+      test.appendData('myKey1', 'myValue1')
       test.startEvent('myEventA')
-      test.appendDataKeyValue('myKey2', 'myValue2')
+      test.appendData('myKey2', 'myValue2')
       test.finishFrame()
 
       test.appendData('String1')

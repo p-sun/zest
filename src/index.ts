@@ -137,28 +137,31 @@ if (!appRoot || !buttonsGroup || !gridRoot) {
 }
 
 const main = new Main(appRoot, buttonsGroup)
-const gridText = new GridData({ rowCount: 10, colCount: 10 })
-displayGridOn(gridRoot, gridText)
+const gridData = new GridData({ rowCount: 10, colCount: 10 })
+gridData.setCharAt({ row: 3, column: 4 }, 'O')
+gridData.setCharAt({ row: 3, column: 4 }, '<text style="color:yellow">X</text>')
+
+displayGridOn(gridRoot, gridData)
 
 document.onkeydown = function (e) {
   switch (e.key) {
     case 'ArrowUp':
       main.selectPrevious()
-      gridText.moveSelectedCellPosIn('up')
-      displayGridOn(gridRoot, gridText)
+      gridData.moveSelectedCellPosIn('up')
+      displayGridOn(gridRoot, gridData)
       break
     case 'ArrowDown':
       main.selectNext()
-      gridText.moveSelectedCellPosIn('down')
-      displayGridOn(gridRoot, gridText)
+      gridData.moveSelectedCellPosIn('down')
+      displayGridOn(gridRoot, gridData)
       break
     case 'ArrowRight':
-      gridText.moveSelectedCellPosIn('right')
-      displayGridOn(gridRoot, gridText)
+      gridData.moveSelectedCellPosIn('right')
+      displayGridOn(gridRoot, gridData)
       break
     case 'ArrowLeft':
-      gridText.moveSelectedCellPosIn('left')
-      displayGridOn(gridRoot, gridText)
+      gridData.moveSelectedCellPosIn('left')
+      displayGridOn(gridRoot, gridData)
       break
   }
 }

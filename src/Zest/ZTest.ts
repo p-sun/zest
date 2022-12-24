@@ -53,7 +53,6 @@ export interface ZTest {
   startEventW(eventName: string): void
 
   appendData(str1: string, str2?: string, str3?: string): void
-  appendDataKeyValue(key: string, value: string): void
 
   expectEqual(key: string, actual: string, expected: string): void
   expectNotEqual(key: string, actual: string, expected: string): void
@@ -303,16 +302,6 @@ export class ZTestImpl implements ZTest {
     })
   }
 
-  appendDataKeyValue(key: string, value: string) {
-    this.needsUpdate = true
-    this.instructionsMgr.push({
-      functionName: 'appendDataKeyValue',
-      key,
-      value,
-      frame: this.currentFrame,
-    })
-  }
-
   /* --------------------------- Value Expectations --------------------------- */
 
   expectEqual(key: string, value: string, expectedVal: string) {
@@ -495,11 +484,6 @@ type Instruction = HasFrame &
         functionName: 'startEventW'
         eventName: ZEventName
         isWarn: true
-      }
-    | {
-        functionName: 'appendDataKeyValue'
-        key: string
-        value: string
       }
     | {
         functionName: 'appendData'
@@ -787,13 +771,6 @@ class InstructionsManager {
             text: `appendData("${instr.str1}")`,
             color: 'default',
           }
-        }
-        break
-
-      case 'appendDataKeyValue':
-        yield {
-          text: `appendData("${instr.key}", "${instr.value}")`,
-          color: 'default',
         }
         break
 
