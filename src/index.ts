@@ -139,7 +139,10 @@ if (!appRoot || !buttonsGroup || !gridRoot) {
 const main = new Main(appRoot, buttonsGroup)
 const gridData = new GridData({ rowCount: 10, colCount: 10 })
 gridData.setCharAt({ row: 3, column: 4 }, 'O')
-gridData.setCharAt({ row: 3, column: 4 }, '<text style="color:yellow">X</text>')
+gridData.setCharAt(
+  { row: 3, column: 4 },
+  '<text style="color:lightGreen">O</text>'
+)
 
 displayGridOn(gridRoot, gridData)
 

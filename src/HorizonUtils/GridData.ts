@@ -162,10 +162,8 @@ export class GridData {
   }
 
   private _yellowHighlightTags(str: string, isHorizon: boolean) {
-    const openTag = isHorizon
-      ? '<mark=#ffff0088>'
-      : `<text style="color:yellow">`
-    const closeTag = isHorizon ? '<mark=#00000000>' : '</text>'
+    const openTag = isHorizon ? '<mark=#ffff0088>' : `<mark>`
+    const closeTag = isHorizon ? '<mark=#00000000>' : '</mark>'
     return openTag + str + closeTag
   }
 
