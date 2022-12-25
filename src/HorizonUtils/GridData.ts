@@ -54,6 +54,20 @@ export function CellPositionEqual(a: CellPosition, b: CellPosition) {
   return a.row === b.row && a.column === b.column
 }
 
+export function IndexForCellPosition(cellPos: CellPosition, size: GridSize) {
+  return cellPos.row * size.colCount + cellPos.column
+}
+
+export function CellPositionForIndex(
+  index: number,
+  size: GridSize
+): CellPosition {
+  return {
+    row: Math.floor(index / size.colCount),
+    column: Math.floor(index % size.colCount),
+  }
+}
+
 export type Direction = 'up' | 'down' | 'left' | 'right'
 
 export class GridData {

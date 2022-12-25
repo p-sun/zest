@@ -1,4 +1,11 @@
-import { GridData } from './HorizonUtils/GridData'
+import {
+  CellPositionForIndex,
+  CharForPassStatus,
+  Direction,
+  GridData,
+  IndexForCellPosition,
+  myGridSize,
+} from './HorizonUtils/GridData'
 import { ZTest, ZTestImpl, ZTestResult } from './Zest/ZTest'
 import {
   JestTestName,
@@ -56,8 +63,14 @@ class Main {
   private readonly localStorageKey = 'currentName'
   public currentName: JestTestName
   public currentTestId: string = ''
+  // private updateListener: () => void | undefined
 
-  constructor(public appRoot: Element, public buttonsGroup: Element) {
+  constructor(
+    public appRoot: Element,
+    public buttonsGroup: Element,
+    public gridRoot: Element,
+    public gridData: GridData
+  ) {
     const storedName = localStorage.getItem(
       this.localStorageKey
     ) as JestTestName
@@ -66,6 +79,17 @@ class Main {
       ? storedName
       : allJestTestNames[0]
     this.selectName(this.currentName)
+  }
+
+  // addListener(listener: () => {}) {}
+
+  selectDirection(direction: Direction) {
+    gridData.moveSelectedCellPosIn(direction)
+    displayGridOn(this.gridRoot, this.gridData)
+    const index = IndexForCellPosition(gridData.selectedCellPos, gridData.size)
+    if (index < allJestTestNames.length) {
+      this.selectName(allJestTestNames[index])
+    }
   }
 
   selectName(name: JestTestName) {
@@ -82,20 +106,10 @@ class Main {
         this.selectName(jestName)
       }
     )
-  }
 
-  selectPrevious() {
-    const newIndex = allJestTestNames.indexOf(this.currentName) - 1
-    if (newIndex >= 0) {
-      this.selectName(allJestTestNames[newIndex])
-    }
-  }
-
-  selectNext() {
-    const newIndex = allJestTestNames.indexOf(this.currentName) + 1
-    if (newIndex < allJestTestNames.length) {
-      this.selectName(allJestTestNames[newIndex])
-    }
+    let index = allJestTestNames.indexOf(name)
+    gridData.selectCellPosition(CellPositionForIndex(index, this.gridData.size))
+    displayGridOn(this.gridRoot, this.gridData)
   }
 
   private runHTMLTest(element: Element, jestTestName: JestTestName) {
@@ -107,6 +121,13 @@ class Main {
     zestTest.addResultListener((testResult: ZTestResult) => {
       if (testResult.testId === this.currentTestId) {
         diplayTestResultOn(element, prependString, testResult)
+      }
+      let char = CharForPassStatus(testResult.status.passStatus)
+      if (char) {
+        const index = allJestTestNames.indexOf(testResult.testName as any)
+        const cellPos = CellPositionForIndex(index, gridData.size)
+        gridData.setCharAt(cellPos, char)
+        displayGridOn(this.gridRoot, gridData)
       }
     })
     jestConfig.runZestTest(zestTest, false)
@@ -136,35 +157,24 @@ if (!appRoot || !buttonsGroup || !gridRoot) {
   throw new Error('Main HTML does not include required classes')
 }
 
-const main = new Main(appRoot, buttonsGroup)
-const gridData = new GridData({ rowCount: 10, colCount: 10 })
-gridData.setCharAt({ row: 3, column: 4 }, 'O')
-gridData.setCharAt(
-  { row: 3, column: 4 },
-  '<text style="color:lightGreen">O</text>'
-)
+const gridData = new GridData({ rowCount: 6, colCount: 6 })
+const main = new Main(appRoot, buttonsGroup, gridRoot, gridData)
 
 displayGridOn(gridRoot, gridData)
 
 document.onkeydown = function (e) {
   switch (e.key) {
     case 'ArrowUp':
-      main.selectPrevious()
-      gridData.moveSelectedCellPosIn('up')
-      displayGridOn(gridRoot, gridData)
+      main.selectDirection('up')
       break
     case 'ArrowDown':
-      main.selectNext()
-      gridData.moveSelectedCellPosIn('down')
-      displayGridOn(gridRoot, gridData)
+      main.selectDirection('down')
       break
     case 'ArrowRight':
-      gridData.moveSelectedCellPosIn('right')
-      displayGridOn(gridRoot, gridData)
+      main.selectDirection('right')
       break
     case 'ArrowLeft':
-      gridData.moveSelectedCellPosIn('left')
-      displayGridOn(gridRoot, gridData)
+      main.selectDirection('left')
       break
   }
 }
