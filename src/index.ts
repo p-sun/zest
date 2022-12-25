@@ -1,186 +1,53 @@
-import {
-  CellPositionForIndex,
-  CharForPassStatus,
-  Direction,
-  GridData,
-  IndexForCellPosition,
-  myGridSize,
-} from './HorizonUtils/GridData'
-import { ZTest, ZTestImpl, ZTestResult } from './Zest/ZTest'
-import {
-  JestTestName,
-  JestConfigForName,
-  allJestTestNames,
-  allJestConfigs,
-} from './Zest/tests/ZTestExamples'
+import { GridData } from './HorizonUtils/GridData'
+import { updateHTML } from './WebOnly/HtmlDisplay'
+import { WebMain } from './WebOnly/WebMain'
 
-function displayGridOn(element: Element, grid: GridData) {
-  element.innerHTML = grid.getText(false)
-  element.innerHTML += `<br><br><text class='arrowKeysPrompt'>
-    Use the arrow keys to navigate. <br>Hold right arrow to run all tests.
-    <text>`
-}
+const webMain = new WebMain(new GridData({ rowCount: 6, colCount: 6 }))
+exec()
 
-function displayButtonsOn<T extends string>(
-  element: Element,
-  selectedText: T,
-  texts: T[],
-  onClick: (text: T) => void
-) {
-  element.innerHTML = ''
+function exec() {
+  const appRoot = document.getElementsByClassName('testResults').item(0)
+  const buttonsGroup = document.getElementsByClassName('btn-group').item(0)
+  const gridRoot = document.getElementsByClassName('grid').item(0)
 
-  for (const text of texts) {
-    let btn: HTMLButtonElement = document.createElement('button')
-    btn.textContent = text
-    if (selectedText === text) {
-      btn.className = 'selectedButton'
-    }
-    btn.addEventListener('click', () => onClick(text))
-    element.appendChild(btn)
-  }
-}
-
-function diplayTestResultOn(
-  element: Element,
-  prependString: string,
-  testResult: ZTestResult
-) {
-  function replaceColorsForHTML(text?: string): string {
-    return (text ?? '')
-      .replace(
-        new RegExp('<color=#([0-9a-fA-F]{6})>', 'g'),
-        '<text style="color:#$1;">' // Replace <color=#c5f593>
-      )
-      .replace(
-        new RegExp('<color=#([0-9a-fA-F])([0-9a-fA-F])([0-9a-fA-F])>', 'g'),
-        '<text style="color:#$1$1$2$2$3$3;">' // Replace <color=#f8a>
-      )
-      .replace(new RegExp('</color>', 'g'), '</text>')
+  if (!appRoot || !buttonsGroup || !gridRoot) {
+    throw new Error('Main HTML does not include required classes')
   }
 
-  element.innerHTML = prependString
-  element.innerHTML += '<br><br>' + replaceColorsForHTML(testResult.text)
-}
+  webMain.setListener((testResult) => {
+    updateHTML(webMain, buttonsGroup, appRoot, gridRoot, testResult)
+  })
+  webMain.start()
 
-class Main {
-  private readonly localStorageKey = 'currentName'
-  public currentName: JestTestName
-  public currentTestId: string = ''
-  private updateListener: (() => void) | undefined
-
-  constructor(public appRoot: Element, public gridData: GridData) {
-    const storedName = localStorage.getItem(
-      this.localStorageKey
-    ) as JestTestName
-
-    this.currentName = allJestConfigs[storedName]
-      ? storedName
-      : allJestTestNames[0]
-    this.selectName(this.currentName)
-  }
-
-  setListener(listener: () => void) {
-    this.updateListener = listener
-  }
-
-  selectDirection(direction: Direction) {
-    gridData.moveSelectedCellPosIn(direction)
-    const index = IndexForCellPosition(gridData.selectedCellPos, gridData.size)
-    if (index < allJestTestNames.length) {
-      this.selectName(allJestTestNames[index])
-    } else {
-      this.updateListener?.()
+  document.onkeydown = function (e) {
+    switch (e.key) {
+      case 'ArrowUp':
+        webMain.selectDirection('up')
+        break
+      case 'ArrowDown':
+        webMain.selectDirection('down')
+        break
+      case 'ArrowRight':
+        webMain.selectDirection('right')
+        break
+      case 'ArrowLeft':
+        webMain.selectDirection('left')
+        break
     }
   }
 
-  selectName(name: JestTestName) {
-    this.currentName = name
-    localStorage.setItem(this.localStorageKey, this.currentName)
-
-    this.runHTMLTest(this.appRoot, name)
-
-    let index = allJestTestNames.indexOf(name)
-    gridData.selectCellPosition(CellPositionForIndex(index, this.gridData.size))
-
-    this.updateListener?.()
-  }
-
-  private runHTMLTest(element: Element, jestTestName: JestTestName) {
-    const jestConfig = JestConfigForName(jestTestName)
-    const prependString = jestConfig.describe + '<br>> ' + jestConfig.it
-
-    const zestTest: ZTest = new ZTestImpl(jestTestName)
-    this.currentTestId = zestTest.testId
-    zestTest.addResultListener((testResult: ZTestResult) => {
-      if (testResult.testId === this.currentTestId) {
-        diplayTestResultOn(element, prependString, testResult)
+  // Prevent window from scrolling on arrow keypress
+  window.addEventListener(
+    'keydown',
+    function (e) {
+      if (
+        ['Space', 'ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight'].indexOf(
+          e.code
+        ) > -1
+      ) {
+        e.preventDefault()
       }
-      let char = CharForPassStatus(testResult.status.passStatus)
-      if (char) {
-        const index = allJestTestNames.indexOf(testResult.testName as any)
-        const cellPos = CellPositionForIndex(index, gridData.size)
-        gridData.setCharAt(cellPos, char)
-      }
-      this.updateListener?.()
-    })
-    jestConfig.runZestTest(zestTest, false)
-  }
-}
-
-// Prevent window from scrolling on arrow keypress
-window.addEventListener(
-  'keydown',
-  function (e) {
-    if (
-      ['Space', 'ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight'].indexOf(
-        e.code
-      ) > -1
-    ) {
-      e.preventDefault()
-    }
-  },
-  false
-)
-
-const appRoot = document.getElementsByClassName('testResults').item(0)
-const buttonsGroup = document.getElementsByClassName('btn-group').item(0)
-const gridRoot = document.getElementsByClassName('grid').item(0)
-
-if (!appRoot || !buttonsGroup || !gridRoot) {
-  throw new Error('Main HTML does not include required classes')
-}
-const updateHTML = () => {
-  displayButtonsOn(
-    buttonsGroup,
-    main.currentName,
-    allJestTestNames,
-    (jestName: JestTestName) => {
-      main.selectName(jestName)
-    }
+    },
+    false
   )
-  displayGridOn(gridRoot, gridData)
-}
-
-const gridData = new GridData({ rowCount: 6, colCount: 6 })
-const main = new Main(appRoot, gridData)
-main.setListener(() => {
-  updateHTML()
-})
-updateHTML()
-
-document.onkeydown = function (e) {
-  switch (e.key) {
-    case 'ArrowUp':
-      main.selectDirection('up')
-      break
-    case 'ArrowDown':
-      main.selectDirection('down')
-      break
-    case 'ArrowRight':
-      main.selectDirection('right')
-      break
-    case 'ArrowLeft':
-      main.selectDirection('left')
-      break
-  }
 }

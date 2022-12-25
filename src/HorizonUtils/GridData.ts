@@ -214,9 +214,8 @@ function CharLabelForIndex(
   lowercaseFirst: boolean = false
 ) {
   if (n >= restartLettersAtN * 2) {
-    console.log(
-      `ERROR: expected n < restartAt. Got n:${n}, restartAtN: ${restartLettersAtN}`
-    )
+    console.log(`ERROR: expected n < restartAt. 
+      Got n:${n}, restartAtN: ${restartLettersAtN}`)
     return '+'
   }
 
