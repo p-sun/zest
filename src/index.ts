@@ -63,14 +63,9 @@ class Main {
   private readonly localStorageKey = 'currentName'
   public currentName: JestTestName
   public currentTestId: string = ''
-  // private updateListener: () => void | undefined
+  private updateListener: (() => void) | undefined
 
-  constructor(
-    public appRoot: Element,
-    public buttonsGroup: Element,
-    public gridRoot: Element,
-    public gridData: GridData
-  ) {
+  constructor(public appRoot: Element, public gridData: GridData) {
     const storedName = localStorage.getItem(
       this.localStorageKey
     ) as JestTestName
@@ -81,14 +76,17 @@ class Main {
     this.selectName(this.currentName)
   }
 
-  // addListener(listener: () => {}) {}
+  setListener(listener: () => void) {
+    this.updateListener = listener
+  }
 
   selectDirection(direction: Direction) {
     gridData.moveSelectedCellPosIn(direction)
-    displayGridOn(this.gridRoot, this.gridData)
     const index = IndexForCellPosition(gridData.selectedCellPos, gridData.size)
     if (index < allJestTestNames.length) {
       this.selectName(allJestTestNames[index])
+    } else {
+      this.updateListener?.()
     }
   }
 
@@ -98,18 +96,10 @@ class Main {
 
     this.runHTMLTest(this.appRoot, name)
 
-    displayButtonsOn(
-      this.buttonsGroup,
-      this.currentName,
-      allJestTestNames,
-      (jestName: JestTestName) => {
-        this.selectName(jestName)
-      }
-    )
-
     let index = allJestTestNames.indexOf(name)
     gridData.selectCellPosition(CellPositionForIndex(index, this.gridData.size))
-    displayGridOn(this.gridRoot, this.gridData)
+
+    this.updateListener?.()
   }
 
   private runHTMLTest(element: Element, jestTestName: JestTestName) {
@@ -127,8 +117,8 @@ class Main {
         const index = allJestTestNames.indexOf(testResult.testName as any)
         const cellPos = CellPositionForIndex(index, gridData.size)
         gridData.setCharAt(cellPos, char)
-        displayGridOn(this.gridRoot, gridData)
       }
+      this.updateListener?.()
     })
     jestConfig.runZestTest(zestTest, false)
   }
@@ -156,11 +146,24 @@ const gridRoot = document.getElementsByClassName('grid').item(0)
 if (!appRoot || !buttonsGroup || !gridRoot) {
   throw new Error('Main HTML does not include required classes')
 }
+const updateAll = () => {
+  displayButtonsOn(
+    buttonsGroup,
+    main.currentName,
+    allJestTestNames,
+    (jestName: JestTestName) => {
+      main.selectName(jestName)
+    }
+  )
+  displayGridOn(gridRoot, gridData)
+}
 
 const gridData = new GridData({ rowCount: 6, colCount: 6 })
-const main = new Main(appRoot, buttonsGroup, gridRoot, gridData)
-
-displayGridOn(gridRoot, gridData)
+const main = new Main(appRoot, gridData)
+main.setListener(() => {
+  updateAll()
+})
+updateAll()
 
 document.onkeydown = function (e) {
   switch (e.key) {
