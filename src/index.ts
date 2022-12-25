@@ -16,6 +16,9 @@ import {
 
 function displayGridOn(element: Element, grid: GridData) {
   element.innerHTML = grid.getText(false)
+  element.innerHTML += `<br><br><text class='arrowKeysPrompt'>
+    Use the arrow keys to navigate. <br>Hold right arrow to run all tests.
+    <text>`
 }
 
 function displayButtonsOn<T extends string>(
@@ -146,7 +149,7 @@ const gridRoot = document.getElementsByClassName('grid').item(0)
 if (!appRoot || !buttonsGroup || !gridRoot) {
   throw new Error('Main HTML does not include required classes')
 }
-const updateAll = () => {
+const updateHTML = () => {
   displayButtonsOn(
     buttonsGroup,
     main.currentName,
@@ -161,9 +164,9 @@ const updateAll = () => {
 const gridData = new GridData({ rowCount: 6, colCount: 6 })
 const main = new Main(appRoot, gridData)
 main.setListener(() => {
-  updateAll()
+  updateHTML()
 })
-updateAll()
+updateHTML()
 
 document.onkeydown = function (e) {
   switch (e.key) {

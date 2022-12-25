@@ -16,6 +16,11 @@
   letter-spacing: 10px;
 }
 
+.grid .arrowKeysPrompt {
+  letter-spacing: 0px;
+  font-size: large;
+}
+
 .btn-group {
   display: flex;
   flex-direction: column;
