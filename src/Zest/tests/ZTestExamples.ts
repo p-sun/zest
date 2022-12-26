@@ -381,7 +381,7 @@ export const allJestConfigs = {
       result = test.finishFrame()
 
       test.startEvent('TriggerExit')
-      test.finishTest()
+      result = test.finishFrame()
       result = test.finishFrame()
       if (runJest) {
         expect(result).not.toBeUndefined()

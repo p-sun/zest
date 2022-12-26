@@ -531,9 +531,11 @@ type Instruction = HasFrame &
 
 type InstructionsAcc = {
   status: ZTestStatus
-  expectEventOnceInstrs: (Instruction & {
-    functionName: 'expectEvent' | 'expectEventW'
-  })[]
+  fulfilledIndicies: Set<number>
+}
+
+type ExpectEventInstruction = Instruction & {
+  functionName: 'expectEvent' | 'expectEventW'
 }
 
 class InstructionsManager {
@@ -551,6 +553,7 @@ class InstructionsManager {
     let str = ''
     let prevLine: Line = null as any
     let prevLineCount = 1
+
     const { lines, status } = InstructionsManager.parseLinesForInstructions(
       this.instructions
     )
@@ -598,11 +601,15 @@ class InstructionsManager {
     let currentFrame: Frame = -1
     let accumulator: InstructionsAcc = {
       status: { done: false, passStatus: 'RUNNING' },
-      expectEventOnceInstrs: [],
+      fulfilledIndicies: new Set<number>(),
     }
 
+    const expectedEvents = instructions.filter(
+      (e) =>
+        e.functionName === 'expectEvent' || e.functionName === 'expectEventW'
+    ) as ExpectEventInstruction[]
     let lines: Line[] = []
-    for (const instr of instructions) {
+    instructions.forEach((instr) => {
       if (currentFrame !== instr.frame) {
         currentFrame = instr.frame
         const maybeBreak = currentFrame !== 0 ? '<br>' : ''
@@ -613,9 +620,11 @@ class InstructionsManager {
       }
 
       lines = lines.concat(
-        Array.from(this.parseLinesForInstruction(instr, accumulator))
+        Array.from(
+          this.parseLinesForInstruction(instr, expectedEvents, accumulator)
+        )
       )
-    }
+    })
 
     const textStatus = 'TEST STATUS: ' + accumulator.status.passStatus + '<br>'
     const testStatusLine: Line = {
@@ -637,6 +646,7 @@ class InstructionsManager {
 
   private static *parseLinesForInstruction(
     instr: Instruction,
+    expectedEventInstrs: ExpectEventInstruction[],
     acc: InstructionsAcc
   ): Generator<Line, void, unknown> {
     switch (instr.functionName) {
@@ -653,52 +663,38 @@ class InstructionsManager {
           text: `${instr.functionName}("${instr.eventName}")`,
           color: 'default',
         }
-        acc.expectEventOnceInstrs.push(instr)
         break
 
       case 'startEvent':
       case 'startEventW':
-        const expectOnce = acc.expectEventOnceInstrs.shift()
-        if (expectOnce) {
-          if (instr.eventName === expectOnce.eventName) {
-            yield {
-              text:
-                `${instr.functionName}("${instr.eventName}")` +
-                `<br>| OK: ${expectOnce.functionName}("${expectOnce.eventName}")`,
-              color: 'green',
-            }
-            break
-          } else {
-            const { color, passStatus } = this._colorStatusForFailedLine(
-              expectOnce.isWarn
-            )
-            yield {
-              text:
-                `${instr.functionName}("${instr.eventName}")` +
-                `<br>| ${passStatus}: Expected "${expectOnce.eventName}".`,
-              color,
-            }
-
-            if (acc.status.passStatus === 'RUNNING') {
-              acc.status = { done: false, passStatus }
-            }
-            break
+        const { success, message } = this._evaluateStartEvent(
+          instr,
+          acc.fulfilledIndicies,
+          expectedEventInstrs
+        )
+        if (success) {
+          yield {
+            text:
+              `${instr.functionName}("${instr.eventName}")` +
+              `<br>| OK: ${message})`,
+            color: 'green',
           }
-        }
-
-        const errorStatus = instr.isWarn ? 'WARN' : 'FAIL'
-
-        yield {
-          text:
-            `${instr.functionName}("${instr.eventName}")` +
-            `<br>| ${errorStatus}: Did not get expectEvent() before startEvent().`,
-          color: instr.isWarn ? 'yellow' : 'red',
-        }
-        if (acc.status.passStatus === 'RUNNING') {
-          acc.status = {
-            done: false,
-            passStatus: instr.isWarn ? 'WARN' : 'FAIL',
+        } else {
+          const { color, passStatus } = this._colorStatusForFailedLine(
+            instr.isWarn
+          )
+          yield {
+            text:
+              `${instr.functionName}("${instr.eventName}")` +
+              `<br>| ${passStatus}: ${message}`,
+            color,
           }
+
+          acc.status = this._newStatusForFailedLine(
+            true,
+            instr.isWarn,
+            acc.status
+          )
         }
         break
 
@@ -721,15 +717,18 @@ class InstructionsManager {
             color: 'default',
           }
         }
-        if (!acc.status.done && acc.expectEventOnceInstrs.length > 0) {
+        const unreceivedEvents = expectedEventInstrs.filter((instr, i) => {
+          const expectEventInstr = this._expectEventInstruction(instr)
+          return expectEventInstr && !acc.fulfilledIndicies.has(i)
+        }) as ExpectEventInstruction[]
+        if (!acc.status.done && unreceivedEvents.length > 0) {
           yield {
             text: `<br>Still waiting on startEvent():`,
             color: 'grey',
           }
-          for (const expect of acc.expectEventOnceInstrs) {
-            const { color, passStatus } = this._colorStatusForFailedLine(
-              expect.isWarn
-            )
+          for (const expect of unreceivedEvents) {
+            const { color, passStatus: passStatus } =
+              this._colorStatusForFailedLine(expect.isWarn)
             yield {
               text:
                 `${expect.functionName}("${expect.eventName}")` +
@@ -818,6 +817,89 @@ class InstructionsManager {
         throw new Error(
           'Instruction Parser not implemented' + JSON.stringify(instr)
         )
+    }
+  }
+
+  /*
+    ^ means expectEvent was fulfilled by a previous startEvent().
+    * is current expectEvent
+  
+    Expect A B, Start A B         -> success: true
+           ^ *
+    Expect A B, Start B A         -> success: false, msg: "A is expected before B". Finish test: Not waiting.
+           * ^          
+    Expect A B, Start B A A       -> success: false, msg: "A receieved before the expectEvent A". Finish test: Not waiting.
+           ^ ^          
+    Expect A B C D, Start B D A   -> success: false, msg: "A is expected before B". Finish test: Waiting on C.
+           * ^   ^ 
+    Expect A B C D E, Start B E C   -> success: false, msg: "C is expected before E". Finish test: Waiting on A & D.
+             ^ *   ^ 
+  */
+  static _evaluateStartEvent(
+    startEvent: Instruction & {
+      functionName: 'startEvent' | 'startEventW'
+    },
+    fulfilledIndicies: Set<number>,
+    expectEventInstrs: ExpectEventInstruction[]
+  ): {
+    success: boolean
+    message: string
+  } {
+    const currentExpIndex = expectEventInstrs.findIndex((instr, i) => {
+      const expectEvent = this._expectEventInstruction(instr)
+      return (
+        expectEvent &&
+        expectEvent.eventName == startEvent.eventName &&
+        !fulfilledIndicies.has(i)
+      )
+    })
+    fulfilledIndicies.add(currentExpIndex)
+
+    const currentExp = expectEventInstrs[
+      currentExpIndex
+    ] as ExpectEventInstruction
+    if (currentExpIndex == -1) {
+      return {
+        success: false,
+        message: `No expectEvent("${startEvent.eventName}") before startEvent().`,
+      }
+    }
+
+    if (currentExpIndex < expectEventInstrs.length - 1) {
+      // All instructions after current index
+      const instructionsAfterCurrent = expectEventInstrs.slice(
+        currentExpIndex + 1
+      )
+      const nextFulfilledExpectation = instructionsAfterCurrent.find(
+        (instr, i) => {
+          return (
+            fulfilledIndicies.has(currentExpIndex + 1 + i) &&
+            this._expectEventInstruction(instr)
+          )
+        }
+      ) as ExpectEventInstruction | undefined
+
+      if (nextFulfilledExpectation) {
+        return {
+          success: false,
+          message: `"${startEvent.eventName}" is expected before "${nextFulfilledExpectation.eventName}"`,
+        }
+      }
+    }
+    return {
+      success: true,
+      message: `${currentExp.functionName}("${currentExp.eventName}"`,
+    }
+  }
+
+  static _expectEventInstruction(
+    instruction: Instruction
+  ): ExpectEventInstruction | undefined {
+    if (
+      instruction.functionName === 'expectEvent' ||
+      instruction.functionName === 'expectEventW'
+    ) {
+      return instruction
     }
   }
 
