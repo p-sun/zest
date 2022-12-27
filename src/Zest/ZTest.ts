@@ -49,8 +49,8 @@ export interface ZTest {
   expectEvent(eventName: ZEventName): void
   expectEventW(eventName: ZEventName): void
 
-  startEvent(eventName: string): void
-  startEventW(eventName: string): void
+  detectEvent(eventName: string): void
+  detectEventW(eventName: string): void
 
   appendData(str1: string, str2?: string): void
 
@@ -281,20 +281,20 @@ export class ZTestImpl implements ZTest {
     })
   }
 
-  startEvent(eventName: ZEventName) {
+  detectEvent(eventName: ZEventName) {
     this.needsUpdate = true
     this.instructionsMgr.push({
-      functionName: 'startEvent',
+      functionName: 'detectEvent',
       eventName,
       frame: this.currentFrame,
       isWarn: false,
     })
   }
 
-  startEventW(eventName: ZEventName) {
+  detectEventW(eventName: ZEventName) {
     this.needsUpdate = true
     this.instructionsMgr.push({
-      functionName: 'startEventW',
+      functionName: 'detectEventW',
       eventName,
       frame: this.currentFrame,
       isWarn: true,
@@ -487,12 +487,12 @@ type Instruction = HasFrame &
         isWarn: true
       }
     | {
-        functionName: 'startEvent'
+        functionName: 'detectEvent'
         eventName: ZEventName
         isWarn: false
       }
     | {
-        functionName: 'startEventW'
+        functionName: 'detectEventW'
         eventName: ZEventName
         isWarn: true
       }
@@ -676,9 +676,9 @@ class InstructionsManager {
         }
         break
 
-      case 'startEvent':
-      case 'startEventW':
-        const { success, message } = this._evaluateStartEvent(
+      case 'detectEvent':
+      case 'detectEventW':
+        const { success, message } = this._evaluateDetectEvent(
           instr,
           acc.fulfilledIndicies,
           expectEventInstrs
@@ -734,7 +734,7 @@ class InstructionsManager {
         }) as ExpectEventInstruction[]
         if (!acc.status.done && unreceivedEvents.length > 0) {
           yield {
-            text: `<br>Still waiting on startEvent():`,
+            text: `<br>Still waiting on detectEvent():`,
             color: 'grey',
           }
           for (const expect of unreceivedEvents) {
@@ -743,7 +743,7 @@ class InstructionsManager {
             yield {
               text:
                 `${expect.functionName}("${expect.eventName}")` +
-                `<br>| ${passStatus}: Waiting on startEvent("${expect.eventName}")`,
+                `<br>| ${passStatus}: Waiting on detectEvent("${expect.eventName}")`,
               color,
             }
 
@@ -832,26 +832,26 @@ class InstructionsManager {
   }
 
   /*
-    ^ means expectEvent was fulfilled by a previous startEvent().
+    ^ means expectEvent was fulfilled by a previous detectEvent().
     * is current expectEvent
   
-    Expect A B, Start A B         -> success: true
+    Expect A B, Detect A B         -> success: true
            ^ *
-    Expect A B, Start B A         -> success: false, msg: "A is expected before B". Finish test: Not waiting.
+    Expect A B, Detect B A         -> success: false, msg: "A is expected before B". Finish test: Not waiting.
            * ^          
-    Expect A B, Start B A A       -> success: false, msg: "A receieved before the expectEvent A". Finish test: Not waiting.
+    Expect A B, Detect B A A       -> success: false, msg: "A receieved before the expectEvent A". Finish test: Not waiting.
            ^ ^          
-    Expect A B C D, Start B D A   -> success: false, msg: "A is expected before B". Finish test: Waiting on C.
+    Expect A B C D, Detect B D A   -> success: false, msg: "A is expected before B". Finish test: Waiting on C.
            * ^   ^ 
-    Expect A B C D E, Start B E C   -> success: false, msg: "C is expected before E". Finish test: Waiting on A & D.
+    Expect A B C D E, Detect B E C   -> success: false, msg: "C is expected before E". Finish test: Waiting on A & D.
              ^ *   ^ 
   */
-  static _evaluateStartEvent(
-    startEvent: InstructionWithIndex & {
-      functionName: 'startEvent' | 'startEventW'
+  static _evaluateDetectEvent(
+    detectEvent: InstructionWithIndex & {
+      functionName: 'detectEvent' | 'detectEventW'
     },
     fulfilledIndicies: Set<number>,
-    expectEventInstrs: ExpectEventInstruction[] // All expectations before and after startEvent
+    expectEventInstrs: ExpectEventInstruction[] // All expectations before and after detectEvent
   ): {
     success: boolean
     message: string
@@ -860,16 +860,16 @@ class InstructionsManager {
       const expectEvent = this._expectEventInstruction(instr)
       return (
         expectEvent &&
-        expectEvent.eventName == startEvent.eventName &&
+        expectEvent.eventName == detectEvent.eventName &&
         !fulfilledIndicies.has(instr.index)
       )
     })
-    if (!unfulfilledExp || startEvent.index < unfulfilledExp.index) {
+    if (!unfulfilledExp || detectEvent.index < unfulfilledExp.index) {
       // SEARCH 1: Is next unfullfilled expectation with same eventName
-      // as startEvent() AFTER startEvent? (bad case)
+      // as detectEvent() AFTER detectEvent? (bad case)
       return {
         success: false,
-        message: `No expectEvent("${startEvent.eventName}") before startEvent().`,
+        message: `No expectEvent("${detectEvent.eventName}") before detectEvent().`,
       }
     }
 
@@ -883,11 +883,11 @@ class InstructionsManager {
     })
 
     if (nextFulfilledExpectation) {
-      // SEARCH 2: Given there the unfulfilledExp is BEFORE startEvent,
+      // SEARCH 2: Given there the unfulfilledExp is BEFORE detectEvent,
       // is there another expectation that has been fulfilled AFTER the current unfulfilledExp? (Bad case)
       return {
         success: false,
-        message: `"${startEvent.eventName}" is expected before "${nextFulfilledExpectation.eventName}"`,
+        message: `"${detectEvent.eventName}" is expected before "${nextFulfilledExpectation.eventName}"`,
       }
     }
 

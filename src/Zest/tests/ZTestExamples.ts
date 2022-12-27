@@ -23,8 +23,8 @@ export const allJestConfigs = {
       test.expectEvent('TriggerExit')
       result = test.finishFrame()
 
-      test.startEvent('TriggerEnter')
-      test.startEvent('TriggerExit')
+      test.detectEvent('TriggerEnter')
+      test.detectEvent('TriggerExit')
       result = test.finishFrame()
     },
   },
@@ -44,7 +44,7 @@ export const allJestConfigs = {
       test.expectEvent('TriggerExit')
       result = test.finishFrame()
 
-      test.startEvent('TriggerExit')
+      test.detectEvent('TriggerExit')
       result = test.finishFrame()
       result = test.finishFrame()
       if (runJest) {
@@ -86,7 +86,7 @@ export const allJestConfigs = {
       result = test.finishFrame()
       result = test.finishFrame()
 
-      test.startEvent('TriggerEnter')
+      test.detectEvent('TriggerEnter')
       result = test.finishFrame()
 
       if (runJest) {
@@ -103,7 +103,7 @@ export const allJestConfigs = {
     runZestTest: (test: ZTest, runJest: boolean) => {
       test.expectEvent('myEventA')
       test.appendData('myKey1', 'myValue1')
-      test.startEvent('myEventA')
+      test.detectEvent('myEventA')
       test.appendData('myKey2', 'myValue2')
       test.finishFrame()
 
@@ -179,18 +179,18 @@ export const allJestConfigs = {
     },
   },
 
-  testExpectEvent_expectNothing_startABC: {
+  testExpectEvent_expectNothing_detectABC: {
     describe: 'when receiving 3 events, with no expectations',
     it: 'should fail 3 events',
     runZestTest: (test: ZTest, runJest: boolean) => {
-      test.startEvent('myEventA')
-      test.startEvent('myEventB')
-      test.startEvent('myEventC')
+      test.detectEvent('myEventA')
+      test.detectEvent('myEventB')
+      test.detectEvent('myEventC')
       test.finishFrame()
     },
   },
 
-  testExpectEvent_expectABC_startNothing: {
+  testExpectEvent_expectABC_detectNothing: {
     describe: 'when receiving 3 events, with no expectations',
     it: 'should fail 3 events',
     runZestTest: (test: ZTest, runJest: boolean) => {
@@ -202,136 +202,136 @@ export const allJestConfigs = {
     },
   },
 
-  testExpectEvent_expectA_gotAB: {
+  testExpectEvent_expectA_detectAB: {
     describe: 'when expect A, get AB',
     it: 'should fail when second event is received',
     runZestTest: (test: ZTest, runJest: boolean) => {
       test.expectEvent('myEventA')
-      test.startEvent('myEventA')
-      test.startEvent('myEventB')
+      test.detectEvent('myEventA')
+      test.detectEvent('myEventB')
 
       test.finishFrame()
     },
   },
 
-  testExpectEvent_expectAB_gotAB: {
+  testExpectEvent_expectAB_detectAB: {
     describe: 'when expecting event A-B, and recieving event A-B',
     it: 'should pass both events',
     runZestTest: (test: ZTest, runJest: boolean) => {
       test.expectEvent('myEventA')
       test.expectEvent('myEventB')
-      test.startEvent('myEventA')
-      test.startEvent('myEventB')
+      test.detectEvent('myEventA')
+      test.detectEvent('myEventB')
 
       test.finishTest()
     },
   },
 
-  testExpectEvent_expectAB_gotBA: {
+  testExpectEvent_expectAB_detectBA: {
     describe: 'when expecting event A-B, and recieving event A-B',
     it: 'should pass B and fail A',
     runZestTest: (test: ZTest, runJest: boolean) => {
       test.expectEvent('myEventA')
       test.expectEvent('myEventB')
-      test.startEvent('myEventB')
-      test.startEvent('myEventA')
+      test.detectEvent('myEventB')
+      test.detectEvent('myEventA')
 
       test.finishTest()
     },
   },
 
-  testExpectEvent_expectAB_gotABB: {
+  testExpectEvent_expectAB_detectABB: {
     describe: 'when expecting event A-B, and recieving event A-B',
     it: 'should pass AB, fail the second B',
     runZestTest: (test: ZTest, runJest: boolean) => {
       test.expectEvent('myEventA')
       test.expectEvent('myEventB')
-      test.startEvent('myEventA')
-      test.startEvent('myEventB')
-      test.startEvent('myEventB')
+      test.detectEvent('myEventA')
+      test.detectEvent('myEventB')
+      test.detectEvent('myEventB')
 
       test.finishTest()
     },
   },
 
-  testExpectEvent_expectAA_gotAA: {
+  testExpectEvent_expectAA_detectAA: {
     describe: 'when expecting event A-B, and recieving event A-B',
     it: 'should pass both events',
     runZestTest: (test: ZTest, runJest: boolean) => {
       test.expectEvent('myEventA')
       test.expectEvent('myEventA')
-      test.startEvent('myEventA')
-      test.startEvent('myEventA')
+      test.detectEvent('myEventA')
+      test.detectEvent('myEventA')
 
       test.finishTest()
     },
   },
 
-  testExpectEvent_expectAB_gotCD: {
+  testExpectEvent_expectAB_detectCD: {
     describe: 'when expecting event A-B, and recieving event C-D',
     it: 'should pass events',
     runZestTest: (test: ZTest, runJest: boolean) => {
       test.expectEvent('myEventA')
       test.expectEvent('myEventB')
-      test.startEvent('myEventC')
-      test.startEvent('myEventD')
+      test.detectEvent('myEventC')
+      test.detectEvent('myEventD')
 
       test.finishTest()
     },
   },
 
-  testExpectEvent_expectABC_gotAB: {
+  testExpectEvent_expectABC_detectAB: {
     describe: 'when expecting events A-B-C, but only got A-B',
-    it: 'should fail on startEvent B',
+    it: 'should fail on detectEvent B',
     runZestTest: (test: ZTest, runJest: boolean) => {
       test.expectEvent('myEventA')
       test.expectEvent('myEventB')
       test.expectEvent('myEventC')
 
-      test.startEvent('myEventA')
-      test.startEvent('myEventB')
+      test.detectEvent('myEventA')
+      test.detectEvent('myEventB')
 
       test.finishTest()
     },
   },
 
-  testExpectEvent_expectABC_gotAC: {
+  testExpectEvent_expectABC_detectAC: {
     describe: 'when expecting events A-B-C, but only got A-C',
-    it: 'should fail on startEvent B',
+    it: 'should fail on detectEvent B',
     runZestTest: (test: ZTest, runJest: boolean) => {
       test.expectEvent('myEventA')
       test.expectEvent('myEventB')
       test.expectEvent('myEventC')
 
-      test.startEvent('myEventA')
-      test.startEvent('myEventC')
+      test.detectEvent('myEventA')
+      test.detectEvent('myEventC')
 
       test.finishTest()
     },
   },
 
-  testExpectEvent_expectABC_gotAC_diffOrder: {
+  testExpectEvent_expectABC_detectAC_diffOrder: {
     describe: 'when expecting events A-B-C, but only got A-C, with diff order',
-    it: 'should fail on startEvent B',
+    it: 'should fail on detectEvent B',
     runZestTest: (test: ZTest, runJest: boolean) => {
       test.expectEvent('myEventA')
       test.expectEvent('myEventB')
 
-      test.startEvent('myEventA')
+      test.detectEvent('myEventA')
 
       test.expectEvent('myEventC')
-      test.startEvent('myEventC')
+      test.detectEvent('myEventC')
 
       test.finishTest()
     },
   },
 
-  testFinishTest_startAB_expectAC: {
-    describe: 'when start AB, get A',
-    it: 'should fail both start events',
+  testFinishTest_detectAB_expectAC: {
+    describe: 'when detect AB, get A',
+    it: 'should fail both detect events',
     runZestTest: (test: ZTest, runJest: boolean) => {
-      test.startEvent('myEventA')
-      test.startEvent('myEventB')
+      test.detectEvent('myEventA')
+      test.detectEvent('myEventB')
       test.expectEvent('myEventA')
       test.expectEvent('myEventC')
       test.finishTest()
@@ -396,8 +396,8 @@ export const allJestConfigs = {
       })
       test.expectEvent('myEventA')
       test.expectEvent('myEventB')
-      test.startEvent('myEventA')
-      test.startEvent('myEventB')
+      test.detectEvent('myEventA')
+      test.detectEvent('myEventB')
       result = test.finishFrame()
       if (runJest) {
         expect(result).not.toBeNull()
@@ -414,7 +414,7 @@ export const allJestConfigs = {
       }
 
       test.expectEvent('myEventC')
-      test.startEvent('myEventC')
+      test.detectEvent('myEventC')
       result = test.finishFrame()
       if (runJest) {
         expect(result).not.toBeNull()
@@ -442,7 +442,7 @@ export const allJestConfigs = {
       test.finishTestWithDelay(0.8, setTimeout)
 
       test.expectEvent('Collision')
-      test.startEvent('Collision')
+      test.detectEvent('Collision')
 
       result = test.finishFrame()
     },
@@ -460,18 +460,18 @@ export const allJestConfigs = {
       test.finishTestWithDelay(0.8, setTimeout)
 
       test.expectEvent('Collision')
-      test.startEvent('Collision')
-      test.startEvent('Collision')
-      test.startEvent('Collision')
-      test.startEvent('Collision')
+      test.detectEvent('Collision')
+      test.detectEvent('Collision')
+      test.detectEvent('Collision')
+      test.detectEvent('Collision')
 
       result = test.finishFrame()
       result = test.finishFrame()
       result = test.finishFrame()
 
-      test.startEvent('CollisionInfo')
-      test.startEvent('CollisionInfo')
-      test.startEvent('CollisionInfo')
+      test.detectEvent('CollisionInfo')
+      test.detectEvent('CollisionInfo')
+      test.detectEvent('CollisionInfo')
 
       test.expectEvent('CollisionInfo')
       test.expectEvent('CollisionInfo')
@@ -496,18 +496,18 @@ export const allJestConfigs = {
       let result: ZTestResult | null
       test.finishTestWithDelay(0.8, setTimeout)
       test.expectEventW('Collision')
-      test.startEventW('Collision')
-      test.startEventW('Collision')
-      test.startEventW('Collision')
-      test.startEventW('Collision')
+      test.detectEventW('Collision')
+      test.detectEventW('Collision')
+      test.detectEventW('Collision')
+      test.detectEventW('Collision')
 
       result = test.finishFrame()
       result = test.finishFrame()
       result = test.finishFrame()
 
-      test.startEventW('CollisionInfo')
-      test.startEventW('CollisionInfo')
-      test.startEventW('CollisionInfo')
+      test.detectEventW('CollisionInfo')
+      test.detectEventW('CollisionInfo')
+      test.detectEventW('CollisionInfo')
 
       test.expectEventW('CollisionInfo')
       test.expectEventW('CollisionInfo')
@@ -518,10 +518,10 @@ export const allJestConfigs = {
 
       result = test.finishFrame()
       test.expectEventW('Collision')
-      test.startEventW('Collision')
-      test.startEventW('Collision')
-      test.startEventW('Collision')
-      test.startEventW('Collision')
+      test.detectEventW('Collision')
+      test.detectEventW('Collision')
+      test.detectEventW('Collision')
+      test.detectEventW('Collision')
       result = test.finishFrame()
       if (runJest) {
         expect(result?.status.passStatus).toBe('WARN')

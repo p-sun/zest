@@ -19,11 +19,11 @@ describe('Test Zest for trigger enter exit, happy path', () => {
     result = store.finishFrame()
     expect(result).toBeNull()
 
-    test.startEvent('OnTriggerEnter')
+    test.detectEvent('OnTriggerEnter')
     result = store.finishFrame()
     expect(result).not.toBeNull()
 
-    test.startEvent('OnTriggerExit')
+    test.detectEvent('OnTriggerExit')
 
     result = store.finishFrame()
     expect(result).not.toBeNull()
@@ -44,7 +44,7 @@ describe('Test Zest for trigger enter exit, missing trigger enter', () => {
     test.expectEvent('OnTriggerExit')
     result = store.finishFrame()
 
-    test.startEvent('OnTriggerExit')
+    test.detectEvent('OnTriggerExit')
     result = store.finishFrame()
     expect(result).not.toBeNull()
 

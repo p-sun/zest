@@ -38,10 +38,10 @@ When "runTest" event is received:
 -- zest.expectEvent(testName, "TriggerExit") 
 
 When trigger is entered by obj:
--- zest.startEvent(testName, "TriggerEnter")
+-- zest.detectEvent(testName, "TriggerEnter")
 
 When trigger is exited by obj:
--- zest.startEvent(testName, "TriggerExit")`
+-- zest.detectEvent(testName, "TriggerExit")`
 
 const str = WrapTextWithWidth(45, myTextToWrap)
 const str2 = WrapTextWithWidth(-1, myTextNotToWrap)
