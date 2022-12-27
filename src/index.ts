@@ -1,6 +1,8 @@
 import { GridData } from './HorizonUtils/GridData'
 import { updateHTML } from './WebOnly/HtmlDisplay'
 import { WebMain } from './WebOnly/WebMain'
+import { ZTest, ZTestResult } from './Zest/ZTest'
+import { JestConfigForName } from './Zest/tests/ZTestExamples'
 
 const webMain = new WebMain(new GridData({ rowCount: 6, colCount: 6 }))
 exec()
@@ -14,8 +16,19 @@ function exec() {
     throw new Error('Main HTML does not include required classes')
   }
 
-  webMain.setListener((testResult) => {
-    updateHTML(webMain, buttonsGroup, appRoot, gridRoot, testResult)
+  webMain.setTestRunner((testName: string, test: ZTest) => {
+    const jestConfig = JestConfigForName(testName as any)
+    jestConfig.runZestTest(test, false)
+  })
+  webMain.setListener((isCurrentTest: boolean, testResult?: ZTestResult) => {
+    updateHTML(
+      webMain,
+      buttonsGroup,
+      appRoot,
+      gridRoot,
+      isCurrentTest,
+      testResult
+    )
   })
   webMain.start()
 

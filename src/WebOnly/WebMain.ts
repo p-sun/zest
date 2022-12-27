@@ -5,43 +5,59 @@ import {
   CellPositionForIndex,
   CharForPassStatus,
 } from '../HorizonUtils/GridData'
-import { ZTest, ZTestImpl, ZTestResult } from '../Zest/ZTest'
+import { ZTest, ZTestResult, ZTestsStoreImpl } from '../Zest/ZTest'
 import {
   JestTestName,
   allJestConfigs,
   allJestTestNames,
-  JestConfigForName,
-  JestTestConfig,
 } from '../Zest/tests/ZTestExamples'
 
 type WebMainUpdateListener = (
-  testResult?: ZTestResult,
-  jestConfig?: JestTestConfig
+  isCurrentTest: boolean,
+  testResult?: ZTestResult
 ) => void
 
 export class WebMain {
   private readonly localStorageKey = 'currentName'
-  public currentName: JestTestName
-  public currentTestId: string = ''
+  private store = new ZTestsStoreImpl()
   private updateListener: WebMainUpdateListener | undefined
+  private runTestFn: ((testName: string, test: ZTest) => void) | undefined
 
-  constructor(public gridData: GridData) {
-    this.currentName = allJestTestNames[0]
-  }
+  constructor(public gridData: GridData) {}
 
   start() {
     const storedName = localStorage.getItem(
       this.localStorageKey
     ) as JestTestName
 
-    this.currentName = allJestConfigs[storedName]
+    const currentName = allJestConfigs[storedName]
       ? storedName
       : allJestTestNames[0]
-    this.selectName(this.currentName)
+    this.runTestWithName(currentName)
+  }
+
+  getCurrentTestName() {
+    return this.store.currentTestData?.testName
+  }
+
+  setTestRunner(runTest: (testName: string, test: ZTest) => void) {
+    this.runTestFn = runTest
   }
 
   setListener(listener: WebMainUpdateListener) {
     this.updateListener = listener
+    this.store.addResultListener(
+      (testResult: ZTestResult, isCurrentTest: boolean) => {
+        let char = CharForPassStatus(testResult.status.passStatus)
+        if (char) {
+          const index = allJestTestNames.indexOf(testResult.testName as any)
+          const cellPos = CellPositionForIndex(index, this.gridData.size)
+          this.gridData.setCharAt(cellPos, char)
+        }
+
+        listener(isCurrentTest, testResult)
+      }
+    )
   }
 
   selectDirection(direction: Direction) {
@@ -53,40 +69,23 @@ export class WebMain {
     if (index < allJestTestNames.length) {
       this.selectName(allJestTestNames[index])
     } else {
-      this.updateListener?.()
+      // Update the grid when a test DNE for that cellPosition
+      this.updateListener?.(false)
     }
   }
 
-  selectName(name: JestTestName) {
-    this.currentName = name
-    localStorage.setItem(this.localStorageKey, this.currentName)
+  runTestWithName(testName: JestTestName): ZTest {
+    localStorage.setItem(this.localStorageKey, testName)
 
-    this.runHTMLTest(name)
-
-    let index = allJestTestNames.indexOf(name)
+    let index = allJestTestNames.indexOf(testName)
     this.gridData.selectCellPosition(
       CellPositionForIndex(index, this.gridData.size)
     )
 
-    this.updateListener?.()
-  }
+    const test = this.store.startTest(testName)
+    this.store.setCurrentTest(testName)
 
-  private runHTMLTest(jestTestName: JestTestName) {
-    const jestConfig = JestConfigForName(jestTestName)
-    const zestTest: ZTest = new ZTestImpl(jestTestName)
-    this.currentTestId = zestTest.testId
-    zestTest.addResultListener((testResult: ZTestResult) => {
-      let char = CharForPassStatus(testResult.status.passStatus)
-      if (char) {
-        const index = allJestTestNames.indexOf(testResult.testName as any)
-        const cellPos = CellPositionForIndex(index, this.gridData.size)
-        this.gridData.setCharAt(cellPos, char)
-      }
-
-      const testResultToUpdate =
-        testResult.testId === this.currentTestId ? testResult : undefined
-      this.updateListener?.(testResultToUpdate)
-    })
-    jestConfig.runZestTest(zestTest, false)
+    this.runTestFn?.(testName, test)
+    return test
   }
 }

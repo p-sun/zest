@@ -12,19 +12,20 @@ export function updateHTML(
   buttonsGroup: Element,
   testResultElement: Element,
   gridRoot: Element,
+  isCurrentTest: boolean,
   testResult?: ZTestResult
 ) {
   displayButtonsOn(
     buttonsGroup,
-    webMain.currentName,
+    (webMain.getCurrentTestName() ?? '') as any,
     allJestTestNames,
     (jestName: JestTestName) => {
-      webMain.selectName(jestName)
+      webMain.runTestWithName(jestName)
     }
   )
   displayGridOn(gridRoot, webMain.gridData)
 
-  if (testResult) {
+  if (isCurrentTest && testResult) {
     const jestConfig = JestConfigForName(testResult.testName as any)
     const prependString = jestConfig.describe + '<br>> ' + jestConfig.it
     diplayTestResultOn(testResultElement, prependString, testResult)
