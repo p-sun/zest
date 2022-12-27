@@ -8,6 +8,112 @@ export type JestTestConfig = {
 }
 
 export const allJestConfigs = {
+  testFinishFrameWDelay_triggerEnterExit_happyPath: {
+    describe: 'Test Zest for trigger enter exit, happy path',
+    it: 'Should succeed test',
+    runZestTest: (test: ZTest, runJest: boolean) => {
+      if (runJest) {
+        jest.useFakeTimers()
+      }
+
+      let result: ZTestResult | null
+      test.finishTestWithDelay(0.8, setTimeout)
+
+      test.expectEvent('TriggerEnter')
+      test.expectEvent('TriggerExit')
+      result = test.finishFrame()
+
+      test.startEvent('TriggerEnter')
+      test.startEvent('TriggerExit')
+      result = test.finishFrame()
+    },
+  },
+
+  testFinishFrameWDelay_triggerEnterExit_missingEnter: {
+    describe: 'Test Zest for trigger enter exit, missing trigger ENTER',
+    it: 'Should fail test',
+    runZestTest: (test: ZTest, runJest: boolean) => {
+      if (runJest) {
+        jest.useFakeTimers()
+      }
+
+      let result: ZTestResult | null
+      test.finishTestWithDelay(0.8, setTimeout)
+
+      test.expectEvent('TriggerEnter')
+      test.expectEvent('TriggerExit')
+      result = test.finishFrame()
+
+      test.startEvent('TriggerExit')
+      result = test.finishFrame()
+      result = test.finishFrame()
+      if (runJest) {
+        expect(result).not.toBeUndefined()
+      }
+    },
+  },
+
+  testFinishFrameWDelay_triggerEnterExit_missingExit: {
+    describe: 'Test Zest for trigger enter exit, missing trigger EXIT',
+    it: 'Should fail test',
+    runZestTest: (test: ZTest, runJest: boolean) => {
+      if (runJest) {
+        jest.useFakeTimers()
+      }
+
+      let result: ZTestResult | null
+      let testResultFn = runJest
+        ? jest.fn((testResult: ZTestResult) => {})
+        : undefined
+      if (testResultFn) {
+        test.addResultListener(testResultFn)
+
+        let count = 0
+        test.addResultListener((testResult: ZTestResult) => {
+          count++
+          if (count === 2) {
+            expect(testResult.status.passStatus === 'FAIL')
+            expect(testResult.status.done === true)
+          }
+        })
+      }
+
+      test.finishTestWithDelay(0.8, setTimeout)
+      test.expectEvent('TriggerEnter')
+      test.expectEvent('TriggerExit')
+
+      result = test.finishFrame()
+      result = test.finishFrame()
+      result = test.finishFrame()
+
+      test.startEvent('TriggerEnter')
+      result = test.finishFrame()
+
+      if (runJest) {
+        expect(result).not.toBeFalsy()
+        expect(result?.status.passStatus === 'RUNNING')
+        expect(testResultFn).toBeCalledTimes(2)
+      }
+    },
+  },
+
+  testAppendData: {
+    describe: 'when appending data',
+    it: 'should display data',
+    runZestTest: (test: ZTest, runJest: boolean) => {
+      test.expectEvent('myEventA')
+      test.appendData('myKey1', 'myValue1')
+      test.startEvent('myEventA')
+      test.appendData('myKey2', 'myValue2')
+      test.finishFrame()
+
+      test.appendData('String1')
+      test.appendData('String1', 'String2')
+      test.appendData('String2 should be empty', '')
+      test.finishFrame()
+    },
+  },
+
   testValueExpectations_stringEquality: {
     describe: 'when expecting keys',
     it: 'should evaluate correctly data',
@@ -134,6 +240,51 @@ export const allJestConfigs = {
       test.finishTest()
     },
   },
+  testExpectEvent_expectABC_getAB: {
+    describe: 'when expecting events A-B-C, but only got A-B',
+    it: 'should fail on startEvent B',
+    runZestTest: (test: ZTest, runJest: boolean) => {
+      test.expectEvent('myEventA')
+      test.expectEvent('myEventB')
+      test.expectEvent('myEventC')
+
+      test.startEvent('myEventA')
+      test.startEvent('myEventB')
+
+      test.finishTest()
+    },
+  },
+
+  testExpectEvent_expectABC_getAC: {
+    describe: 'when expecting events A-B-C, but only got A-C',
+    it: 'should fail on startEvent B',
+    runZestTest: (test: ZTest, runJest: boolean) => {
+      test.expectEvent('myEventA')
+      test.expectEvent('myEventB')
+      test.expectEvent('myEventC')
+
+      test.startEvent('myEventA')
+      test.startEvent('myEventC')
+
+      test.finishTest()
+    },
+  },
+
+  testExpectEvent_expectABC_getAC_diffOrder: {
+    describe: 'when expecting events A-B-C, but only got A-C, with diff order',
+    it: 'should fail on startEvent B',
+    runZestTest: (test: ZTest, runJest: boolean) => {
+      test.expectEvent('myEventA')
+      test.expectEvent('myEventB')
+
+      test.startEvent('myEventA')
+
+      test.expectEvent('myEventC')
+      test.startEvent('myEventC')
+
+      test.finishTest()
+    },
+  },
 
   testExpectEvent_expectBeforeStartEvent: {
     describe: 'when expecting 1 event, but get 2 in one frame',
@@ -186,69 +337,6 @@ export const allJestConfigs = {
       test.finishFrame() // finish frame 2
 
       test.finishTest() // on frame 3
-    },
-  },
-
-  testExpectEvent_expectABC_getAB: {
-    describe: 'when expecting events A-B-C, but only got A-B',
-    it: 'should fail on startEvent B',
-    runZestTest: (test: ZTest, runJest: boolean) => {
-      test.expectEvent('myEventA')
-      test.expectEvent('myEventB')
-      test.expectEvent('myEventC')
-
-      test.startEvent('myEventA')
-      test.startEvent('myEventB')
-
-      test.finishTest()
-    },
-  },
-
-  testExpectEvent_expectABC_getAC: {
-    describe: 'when expecting events A-B-C, but only got A-C',
-    it: 'should fail on startEvent B',
-    runZestTest: (test: ZTest, runJest: boolean) => {
-      test.expectEvent('myEventA')
-      test.expectEvent('myEventB')
-      test.expectEvent('myEventC')
-
-      test.startEvent('myEventA')
-      test.startEvent('myEventC')
-
-      test.finishTest()
-    },
-  },
-
-  testExpectEvent_expectABC_getAC_diffOrder: {
-    describe: 'when expecting events A-B-C, but only got A-C, with diff order',
-    it: 'should fail on startEvent B',
-    runZestTest: (test: ZTest, runJest: boolean) => {
-      test.expectEvent('myEventA')
-      test.expectEvent('myEventB')
-
-      test.startEvent('myEventA')
-
-      test.expectEvent('myEventC')
-      test.startEvent('myEventC')
-
-      test.finishTest()
-    },
-  },
-
-  testAppendData: {
-    describe: 'when appending data',
-    it: 'should display data',
-    runZestTest: (test: ZTest, runJest: boolean) => {
-      test.expectEvent('myEventA')
-      test.appendData('myKey1', 'myValue1')
-      test.startEvent('myEventA')
-      test.appendData('myKey2', 'myValue2')
-      test.finishFrame()
-
-      test.appendData('String1')
-      test.appendData('String1', 'String2')
-      test.appendData('String2 should be empty', '')
-      test.finishFrame()
     },
   },
 
@@ -343,96 +431,6 @@ export const allJestConfigs = {
       }
     },
   },
-
-  testFinishFrameWDelay_triggerEnterExit_happyPath: {
-    describe: 'Test Zest for trigger enter exit, happy path',
-    it: 'Should succeed test',
-    runZestTest: (test: ZTest, runJest: boolean) => {
-      if (runJest) {
-        jest.useFakeTimers()
-      }
-
-      let result: ZTestResult | null
-      test.finishTestWithDelay(0.8, setTimeout)
-
-      test.expectEvent('TriggerEnter')
-      test.expectEvent('TriggerExit')
-      result = test.finishFrame()
-
-      test.startEvent('TriggerEnter')
-      test.startEvent('TriggerExit')
-      result = test.finishFrame()
-    },
-  },
-
-  testFinishFrameWDelay_triggerEnterExit_missingEnter: {
-    describe: 'Test Zest for trigger enter exit, missing trigger ENTER',
-    it: 'Should fail test',
-    runZestTest: (test: ZTest, runJest: boolean) => {
-      if (runJest) {
-        jest.useFakeTimers()
-      }
-
-      let result: ZTestResult | null
-      test.finishTestWithDelay(0.8, setTimeout)
-
-      test.expectEvent('TriggerEnter')
-      test.expectEvent('TriggerExit')
-      result = test.finishFrame()
-
-      test.startEvent('TriggerExit')
-      result = test.finishFrame()
-      result = test.finishFrame()
-      if (runJest) {
-        expect(result).not.toBeUndefined()
-      }
-    },
-  },
-
-  testFinishFrameWDelay_triggerEnterExit_missingExit: {
-    describe: 'Test Zest for trigger enter exit, missing trigger EXIT',
-    it: 'Should fail test',
-    runZestTest: (test: ZTest, runJest: boolean) => {
-      if (runJest) {
-        jest.useFakeTimers()
-      }
-
-      let result: ZTestResult | null
-      let testResultFn = runJest
-        ? jest.fn((testResult: ZTestResult) => {})
-        : undefined
-      if (testResultFn) {
-        test.addResultListener(testResultFn)
-
-        let count = 0
-        test.addResultListener((testResult: ZTestResult) => {
-          count++
-          if (count === 2) {
-            expect(testResult.status.passStatus === 'FAIL')
-            expect(testResult.status.done === true)
-          }
-        })
-      }
-
-      test.finishTestWithDelay(0.8, setTimeout)
-      test.expectEvent('TriggerEnter')
-      test.expectEvent('TriggerExit')
-
-      result = test.finishFrame()
-      result = test.finishFrame()
-      result = test.finishFrame()
-
-      test.startEvent('TriggerEnter')
-      result = test.finishFrame()
-
-      if (runJest) {
-        expect(result).not.toBeFalsy()
-        expect(result?.status.passStatus === 'RUNNING')
-        expect(testResultFn).toBeCalledTimes(2)
-      }
-    },
-  },
-
   testCombo_collisions_pass: {
     describe: 'Test Zest for collisions',
     it: 'Should pass test',
