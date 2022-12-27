@@ -122,7 +122,7 @@ type ZTestStoreListener = (
 
 export class ZTestsStoreImpl implements ZTestsStore {
   private tests: { [testName: string]: ZTest } = {}
-  private currentTestData?: CurrentTestData
+  currentTestData?: CurrentTestData
   private resultListeners: ZTestStoreListener[] = []
   private currentResultListeners: ((testResult: ZTestResult) => void)[] = []
 

@@ -88,10 +88,6 @@ export class GridData {
     this.selectedPos = cellPos
   }
 
-  moveSelectedCellPosIn(direction: Direction) {
-    this.selectedPos = this._cellPosForDirection(direction)
-  }
-
   setCharAt(cellPos: CellPosition, char: string) {
     this.gridData[cellPos.row][cellPos.column] = char
   }
@@ -131,7 +127,7 @@ export class GridData {
     return str
   }
 
-  private _cellPosForDirection(direction: Direction): CellPosition {
+  cellPosInDirection(direction: Direction): CellPosition {
     const row = this.selectedPos.row
     const column = this.selectedPos.column
     const rowCount = this.size.rowCount

@@ -61,16 +61,15 @@ export class WebMain {
   }
 
   selectDirection(direction: Direction) {
-    this.gridData.moveSelectedCellPosIn(direction)
-    const index = IndexForCellPosition(
-      this.gridData.selectedCellPos,
-      this.gridData.size
-    )
+    const newCellPos = this.gridData.cellPosInDirection(direction)
+    const index = IndexForCellPosition(newCellPos, this.gridData.size)
     if (index < allJestTestNames.length) {
-      this.selectName(allJestTestNames[index])
-    } else {
-      // Update the grid when a test DNE for that cellPosition
-      this.updateListener?.(false)
+      const testName = allJestTestNames[index]
+      this.gridData.selectCellPosition(newCellPos)
+      this.runTestWithName(testName)
+
+      const testResult = this.store.getTest(testName)?.getTestResult()
+      this.updateListener?.(true, testResult)
     }
   }
 
