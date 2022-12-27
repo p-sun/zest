@@ -531,7 +531,7 @@ type Instruction = HasFrame &
 
 type InstructionsAcc = {
   status: ZTestStatus
-  fulfilledIndicies: Set<number>
+  detectedIndicies: Set<number>
 }
 
 type ExpectEventInstruction = Instruction & {
@@ -606,7 +606,7 @@ class InstructionsManager {
     let currentFrame: Frame = -1
     let accumulator: InstructionsAcc = {
       status: { done: false, passStatus: 'RUNNING' },
-      fulfilledIndicies: new Set<number>(),
+      detectedIndicies: new Set<number>(),
     }
 
     const instructionsWithIndex = instructions.map((instr, index) => {
@@ -680,7 +680,7 @@ class InstructionsManager {
       case 'detectEventW':
         const { success, message } = this._evaluateDetectEvent(
           instr,
-          acc.fulfilledIndicies,
+          acc.detectedIndicies,
           expectEventInstrs
         )
         if (success) {
@@ -728,15 +728,15 @@ class InstructionsManager {
             color: 'default',
           }
         }
-        const unreceivedEvents = expectEventInstrs.filter((instr) => {
-          return !acc.fulfilledIndicies.has(instr.index)
+        const undetectedExpects = expectEventInstrs.filter((instr) => {
+          return !acc.detectedIndicies.has(instr.index)
         })
-        if (!acc.status.done && unreceivedEvents.length > 0) {
+        if (!acc.status.done && undetectedExpects.length > 0) {
           yield {
             text: `<br>Still waiting on detectEvent():`,
             color: 'grey',
           }
-          for (const expect of unreceivedEvents) {
+          for (const expect of undetectedExpects) {
             const { color, passStatus: passStatus } =
               this._colorStatusForFailedLine(expect.isWarn)
             yield {
@@ -831,55 +831,55 @@ class InstructionsManager {
   }
 
   /*
-    ^ means expectEvent was fulfilled by a previous detectEvent().
+    ^ means expectEvent was detected by a previous detectEvent().
     * is current expectEvent
   
     Expect A B, Detect A B         -> success: true
            ^ *
     Expect A B, Detect B A         -> success: false, msg: "A is expected before B". Finish test: Not waiting.
            * ^          
-    Expect A B, Detect B A A       -> success: false, msg: "A receieved before the expectEvent A". Finish test: Not waiting.
+    Expect A B, Detect B A A       -> success: false, msg: "No expectEvent("A") before detectEvent()". Finish test: Not waiting.
            ^ ^          
     Expect A B C D, Detect B D A   -> success: false, msg: "A is expected before B". Finish test: Waiting on C.
            * ^   ^ 
-    Expect A B C D E, Detect B E C   -> success: false, msg: "C is expected before E". Finish test: Waiting on A & D.
+    Expect A B C D E, Detect B E C -> success: false, msg: "C is expected before E". Finish test: Waiting on A & D.
              ^ *   ^ 
   */
   static _evaluateDetectEvent(
     detectEvent: InstructionWithIndex & {
       functionName: 'detectEvent' | 'detectEventW'
     },
-    fulfilledIndicies: Set<number>,
+    detectedIndicies: Set<number>,
     expectEventInstrs: ExpectEventInstruction[] // All expectations before and after detectEvent
   ): {
     success: boolean
     message: string
   } {
-    const unfulfilledExp = expectEventInstrs.find((instr) => {
+    const undetectedExp = expectEventInstrs.find((instr) => {
       return (
-        instr.eventName == instr.eventName &&
-        !fulfilledIndicies.has(instr.index)
+        instr.eventName == detectEvent.eventName &&
+        !detectedIndicies.has(instr.index)
       )
     })
-    if (!unfulfilledExp || detectEvent.index < unfulfilledExp.index) {
-      // SEARCH 1: Is next unfullfilled expectation with same eventName
-      // as detectEvent() AFTER detectEvent? (bad case)
+    if (!undetectedExp || detectEvent.index < undetectedExp.index) {
+      // SEARCH 1: Does the next undetected expectation with same eventName
+      // as detectEvent(), occur AFTER detectEvent()? (bad case)
       return {
         success: false,
         message: `No expectEvent("${detectEvent.eventName}") before detectEvent().`,
       }
     }
 
-    fulfilledIndicies.add(unfulfilledExp.index)
+    detectedIndicies.add(undetectedExp.index)
     const nextFulfilledExpectation = expectEventInstrs.find((instr) => {
       return (
-        fulfilledIndicies.has(instr.index) && unfulfilledExp.index < instr.index
+        detectedIndicies.has(instr.index) && undetectedExp.index < instr.index
       )
     })
 
     if (nextFulfilledExpectation) {
-      // SEARCH 2: Given there the unfulfilledExp is BEFORE detectEvent,
-      // is there another expectation that has been fulfilled AFTER the current unfulfilledExp? (Bad case)
+      // SEARCH 2: Given the undetectedExp is BEFORE detectEvent(), is there another
+      // expectation that has been detected AFTER the current undetectedExp? (Bad case)
       return {
         success: false,
         message: `"${detectEvent.eventName}" is expected before "${nextFulfilledExpectation.eventName}"`,
@@ -888,7 +888,7 @@ class InstructionsManager {
 
     return {
       success: true,
-      message: `${unfulfilledExp.functionName}("${unfulfilledExp.eventName}"`,
+      message: `${undetectedExp.functionName}("${undetectedExp.eventName}"`,
     }
   }
 

@@ -101,9 +101,9 @@ export const allJestConfigs = {
     describe: 'when appending data',
     it: 'should display data',
     runZestTest: (test: ZTest, runJest: boolean) => {
-      test.expectEvent('myEventA')
+      test.expectEvent('A')
       test.appendData('myKey1', 'myValue1')
-      test.detectEvent('myEventA')
+      test.detectEvent('A')
       test.appendData('myKey2', 'myValue2')
       test.finishFrame()
 
@@ -183,9 +183,9 @@ export const allJestConfigs = {
     describe: 'when receiving 3 events, with no expectations',
     it: 'should fail 3 events',
     runZestTest: (test: ZTest, runJest: boolean) => {
-      test.detectEvent('myEventA')
-      test.detectEvent('myEventB')
-      test.detectEvent('myEventC')
+      test.detectEvent('A')
+      test.detectEvent('B')
+      test.detectEvent('C')
       test.finishFrame()
     },
   },
@@ -194,9 +194,9 @@ export const allJestConfigs = {
     describe: 'when receiving 3 events, with no expectations',
     it: 'should fail 3 events',
     runZestTest: (test: ZTest, runJest: boolean) => {
-      test.expectEvent('myEventA')
-      test.expectEvent('myEventB')
-      test.expectEvent('myEventC')
+      test.expectEvent('A')
+      test.expectEvent('B')
+      test.expectEvent('C')
 
       test.finishTest()
     },
@@ -206,9 +206,9 @@ export const allJestConfigs = {
     describe: 'when expect A, get AB',
     it: 'should fail when second event is received',
     runZestTest: (test: ZTest, runJest: boolean) => {
-      test.expectEvent('myEventA')
-      test.detectEvent('myEventA')
-      test.detectEvent('myEventB')
+      test.expectEvent('A')
+      test.detectEvent('A')
+      test.detectEvent('B')
 
       test.finishFrame()
     },
@@ -218,10 +218,10 @@ export const allJestConfigs = {
     describe: 'when expecting event A-B, and recieving event A-B',
     it: 'should pass both events',
     runZestTest: (test: ZTest, runJest: boolean) => {
-      test.expectEvent('myEventA')
-      test.expectEvent('myEventB')
-      test.detectEvent('myEventA')
-      test.detectEvent('myEventB')
+      test.expectEvent('A')
+      test.expectEvent('B')
+      test.detectEvent('A')
+      test.detectEvent('B')
 
       test.finishTest()
     },
@@ -231,10 +231,10 @@ export const allJestConfigs = {
     describe: 'when expecting event A-B, and recieving event A-B',
     it: 'should pass B and fail A',
     runZestTest: (test: ZTest, runJest: boolean) => {
-      test.expectEvent('myEventA')
-      test.expectEvent('myEventB')
-      test.detectEvent('myEventB')
-      test.detectEvent('myEventA')
+      test.expectEvent('A')
+      test.expectEvent('B')
+      test.detectEvent('B')
+      test.detectEvent('A')
 
       test.finishTest()
     },
@@ -244,11 +244,11 @@ export const allJestConfigs = {
     describe: 'when expecting event A-B, and recieving event A-B',
     it: 'should pass AB, fail the second B',
     runZestTest: (test: ZTest, runJest: boolean) => {
-      test.expectEvent('myEventA')
-      test.expectEvent('myEventB')
-      test.detectEvent('myEventA')
-      test.detectEvent('myEventB')
-      test.detectEvent('myEventB')
+      test.expectEvent('A')
+      test.expectEvent('B')
+      test.detectEvent('A')
+      test.detectEvent('B')
+      test.detectEvent('B')
 
       test.finishTest()
     },
@@ -258,10 +258,10 @@ export const allJestConfigs = {
     describe: 'when expecting event A-B, and recieving event A-B',
     it: 'should pass both events',
     runZestTest: (test: ZTest, runJest: boolean) => {
-      test.expectEvent('myEventA')
-      test.expectEvent('myEventA')
-      test.detectEvent('myEventA')
-      test.detectEvent('myEventA')
+      test.expectEvent('A')
+      test.expectEvent('A')
+      test.detectEvent('A')
+      test.detectEvent('A')
 
       test.finishTest()
     },
@@ -271,10 +271,10 @@ export const allJestConfigs = {
     describe: 'when expecting event A-B, and recieving event C-D',
     it: 'should pass events',
     runZestTest: (test: ZTest, runJest: boolean) => {
-      test.expectEvent('myEventA')
-      test.expectEvent('myEventB')
-      test.detectEvent('myEventC')
-      test.detectEvent('myEventD')
+      test.expectEvent('A')
+      test.expectEvent('B')
+      test.detectEvent('C')
+      test.detectEvent('D')
 
       test.finishTest()
     },
@@ -284,12 +284,12 @@ export const allJestConfigs = {
     describe: 'when expecting events A-B-C, but only got A-B',
     it: 'should fail on detectEvent B',
     runZestTest: (test: ZTest, runJest: boolean) => {
-      test.expectEvent('myEventA')
-      test.expectEvent('myEventB')
-      test.expectEvent('myEventC')
+      test.expectEvent('A')
+      test.expectEvent('B')
+      test.expectEvent('C')
 
-      test.detectEvent('myEventA')
-      test.detectEvent('myEventB')
+      test.detectEvent('A')
+      test.detectEvent('B')
 
       test.finishTest()
     },
@@ -299,12 +299,12 @@ export const allJestConfigs = {
     describe: 'when expecting events A-B-C, but only got A-C',
     it: 'should fail on detectEvent B',
     runZestTest: (test: ZTest, runJest: boolean) => {
-      test.expectEvent('myEventA')
-      test.expectEvent('myEventB')
-      test.expectEvent('myEventC')
+      test.expectEvent('A')
+      test.expectEvent('B')
+      test.expectEvent('C')
 
-      test.detectEvent('myEventA')
-      test.detectEvent('myEventC')
+      test.detectEvent('A')
+      test.detectEvent('C')
 
       test.finishTest()
     },
@@ -314,13 +314,13 @@ export const allJestConfigs = {
     describe: 'when expecting events A-B-C, but only got A-C, with diff order',
     it: 'should fail on detectEvent B',
     runZestTest: (test: ZTest, runJest: boolean) => {
-      test.expectEvent('myEventA')
-      test.expectEvent('myEventB')
+      test.expectEvent('A')
+      test.expectEvent('B')
 
-      test.detectEvent('myEventA')
+      test.detectEvent('A')
 
-      test.expectEvent('myEventC')
-      test.detectEvent('myEventC')
+      test.expectEvent('C')
+      test.detectEvent('C')
 
       test.finishTest()
     },
@@ -330,10 +330,10 @@ export const allJestConfigs = {
     describe: 'when detect AB, get A',
     it: 'should fail both detect events',
     runZestTest: (test: ZTest, runJest: boolean) => {
-      test.detectEvent('myEventA')
-      test.detectEvent('myEventB')
-      test.expectEvent('myEventA')
-      test.expectEvent('myEventC')
+      test.detectEvent('A')
+      test.detectEvent('B')
+      test.expectEvent('A')
+      test.expectEvent('C')
       test.finishTest()
     },
   },
@@ -394,10 +394,10 @@ export const allJestConfigs = {
       test.addResultListener((result) => {
         count++
       })
-      test.expectEvent('myEventA')
-      test.expectEvent('myEventB')
-      test.detectEvent('myEventA')
-      test.detectEvent('myEventB')
+      test.expectEvent('A')
+      test.expectEvent('B')
+      test.detectEvent('A')
+      test.detectEvent('B')
       result = test.finishFrame()
       if (runJest) {
         expect(result).not.toBeNull()
@@ -413,8 +413,8 @@ export const allJestConfigs = {
         expect(result).toBeNull()
       }
 
-      test.expectEvent('myEventC')
-      test.detectEvent('myEventC')
+      test.expectEvent('C')
+      test.detectEvent('C')
       result = test.finishFrame()
       if (runJest) {
         expect(result).not.toBeNull()
