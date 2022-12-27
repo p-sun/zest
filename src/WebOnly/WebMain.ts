@@ -11,34 +11,25 @@ import {
   ZTestResult,
   ZTestsStore,
 } from '../Zest/ZTest'
-import {
-  JestTestName,
-  allJestConfigs,
-  allJestTestNames,
-} from '../Zest/tests/ZTestExamples'
 
-type WebMainUpdateListener = (
+export interface ZGridRunnerDataSource {
+  testNameForIndex(index: number): string | undefined
+  indexForTestName(testName: string): number
+}
+
+type GridRunnerListener = (
   isCurrentTest: boolean,
   testResult?: ZTestResult
 ) => void
 
-export class WebMain {
-  private readonly localStorageKey = 'currentName'
+export class ZGridTestRunner {
   private store: ZTestsStore = CreateZTestsStore()
   private runTestFn: ((testName: string, test: ZTest) => void) | undefined
 
-  constructor(public gridData: GridData) {}
-
-  start() {
-    const storedName = localStorage.getItem(
-      this.localStorageKey
-    ) as JestTestName
-
-    const currentName = allJestConfigs[storedName]
-      ? storedName
-      : allJestTestNames[0]
-    this.runTestWithName(currentName)
-  }
+  constructor(
+    public gridData: GridData,
+    public dataSource: ZGridRunnerDataSource
+  ) {}
 
   getCurrentTestName() {
     return this.store.getCurrentTest()?.testName
@@ -48,12 +39,12 @@ export class WebMain {
     this.runTestFn = runTest
   }
 
-  setListener(listener: WebMainUpdateListener) {
+  setListener(listener: GridRunnerListener) {
     this.store.addResultListener(
       (testResult: ZTestResult, isCurrentTest: boolean) => {
         let char = CharForPassStatus(testResult.status.passStatus)
         if (char) {
-          const index = allJestTestNames.indexOf(testResult.testName as any)
+          const index = this.dataSource.indexForTestName(testResult.testName)
           const cellPos = CellPositionForIndex(index, this.gridData.size)
           this.gridData.setCharAt(cellPos, char)
         }
@@ -66,20 +57,20 @@ export class WebMain {
   selectDirection(direction: Direction) {
     const newCellPos = this.gridData.cellPosInDirection(direction)
     const index = IndexForCellPosition(newCellPos, this.gridData.size)
-    if (index < allJestTestNames.length) {
-      const testName = allJestTestNames[index]
+    const testName = this.dataSource.testNameForIndex(index)
+    if (index >= 0 && testName) {
       this.gridData.selectCellPosition(newCellPos)
       this.runTestWithName(testName)
     }
   }
 
-  runTestWithName(testName: JestTestName): ZTest {
-    localStorage.setItem(this.localStorageKey, testName)
-
-    let index = allJestTestNames.indexOf(testName)
-    this.gridData.selectCellPosition(
-      CellPositionForIndex(index, this.gridData.size)
-    )
+  runTestWithName(testName: string): ZTest {
+    let index = this.dataSource.indexForTestName(testName)
+    if (index >= 0) {
+      this.gridData.selectCellPosition(
+        CellPositionForIndex(index, this.gridData.size)
+      )
+    }
 
     const test = this.store.startTest(testName)
     this.store.setCurrentTest(testName)

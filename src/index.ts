@@ -1,28 +1,50 @@
 import { GridData } from './HorizonUtils/GridData'
 import { updateHTML } from './WebOnly/HtmlDisplay'
-import { WebMain } from './WebOnly/WebMain'
+import { ZGridTestRunner, ZGridRunnerDataSource } from './WebOnly/WebMain'
 import { ZTest, ZTestResult } from './Zest/ZTest'
-import { JestConfigForName } from './Zest/tests/ZTestExamples'
+import {
+  allJestConfigs,
+  allJestTestNames,
+  JestConfigForName,
+  JestTestName,
+} from './Zest/tests/ZTestExamples'
 
-const webMain = new WebMain(new GridData({ rowCount: 6, colCount: 6 }))
+class JestConfigs implements ZGridRunnerDataSource {
+  testNameForIndex(index: number): string | undefined {
+    return allJestTestNames[index]
+  }
+
+  indexForTestName(testName: string): number {
+    return allJestTestNames.indexOf(testName as any)
+  }
+}
+
+const gridRunner = new ZGridTestRunner(
+  new GridData({ rowCount: 6, colCount: 6 }),
+  new JestConfigs()
+)
 exec()
 
 function exec() {
   const appRoot = document.getElementsByClassName('testResults').item(0)
   const buttonsGroup = document.getElementsByClassName('btn-group').item(0)
   const gridRoot = document.getElementsByClassName('grid').item(0)
+  const localStorageKey = 'currentName'
 
   if (!appRoot || !buttonsGroup || !gridRoot) {
     throw new Error('Main HTML does not include required classes')
   }
 
-  webMain.setTestRunner((testName: string, test: ZTest) => {
+  gridRunner.setTestRunner((testName: string, test: ZTest) => {
     const jestConfig = JestConfigForName(testName as any)
     jestConfig.runZestTest(test, false)
+
+    localStorage.setItem(localStorageKey, testName)
   })
-  webMain.setListener((isCurrentTest: boolean, testResult?: ZTestResult) => {
+
+  gridRunner.setListener((isCurrentTest: boolean, testResult?: ZTestResult) => {
     updateHTML(
-      webMain,
+      gridRunner,
       buttonsGroup,
       appRoot,
       gridRoot,
@@ -30,21 +52,26 @@ function exec() {
       testResult
     )
   })
-  webMain.start()
+
+  const storedName = localStorage.getItem(localStorageKey) as JestTestName
+  const currentName = allJestConfigs[storedName]
+    ? storedName
+    : allJestTestNames[0]
+  gridRunner.runTestWithName(currentName)
 
   document.onkeydown = function (e) {
     switch (e.key) {
       case 'ArrowUp':
-        webMain.selectDirection('up')
+        gridRunner.selectDirection('up')
         break
       case 'ArrowDown':
-        webMain.selectDirection('down')
+        gridRunner.selectDirection('down')
         break
       case 'ArrowRight':
-        webMain.selectDirection('right')
+        gridRunner.selectDirection('right')
         break
       case 'ArrowLeft':
-        webMain.selectDirection('left')
+        gridRunner.selectDirection('left')
         break
     }
   }

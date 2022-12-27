@@ -5,10 +5,10 @@ import {
   JestConfigForName,
   JestTestName,
 } from '../Zest/tests/ZTestExamples'
-import { WebMain } from './WebMain'
+import { ZGridTestRunner } from './WebMain'
 
 export function updateHTML(
-  webMain: WebMain,
+  gridRunner: ZGridTestRunner,
   buttonsGroup: Element,
   testResultElement: Element,
   gridRoot: Element,
@@ -17,13 +17,13 @@ export function updateHTML(
 ) {
   displayButtonsOn(
     buttonsGroup,
-    (webMain.getCurrentTestName() ?? '') as any,
+    (gridRunner.getCurrentTestName() ?? '') as any,
     allJestTestNames,
     (jestName: JestTestName) => {
-      webMain.runTestWithName(jestName)
+      gridRunner.runTestWithName(jestName)
     }
   )
-  displayGridOn(gridRoot, webMain.gridData)
+  displayGridOn(gridRoot, gridRunner.gridData)
 
   if (isCurrentTest && testResult) {
     const jestConfig = JestConfigForName(testResult.testName as any)
