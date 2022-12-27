@@ -617,7 +617,7 @@ class InstructionsManager {
       (instr) =>
         instr.functionName === 'expectEvent' ||
         instr.functionName === 'expectEventW'
-    ) as (ExpectEventInstruction & { index: number })[]
+    ) as ExpectEventInstruction[]
 
     let lines: Line[] = []
     instructionsWithIndex.forEach((instr) => {
@@ -729,9 +729,8 @@ class InstructionsManager {
           }
         }
         const unreceivedEvents = expectEventInstrs.filter((instr) => {
-          const expectEventInstr = this._expectEventInstruction(instr)
-          return expectEventInstr && !acc.fulfilledIndicies.has(instr.index)
-        }) as ExpectEventInstruction[]
+          return !acc.fulfilledIndicies.has(instr.index)
+        })
         if (!acc.status.done && unreceivedEvents.length > 0) {
           yield {
             text: `<br>Still waiting on detectEvent():`,
@@ -857,10 +856,8 @@ class InstructionsManager {
     message: string
   } {
     const unfulfilledExp = expectEventInstrs.find((instr) => {
-      const expectEvent = this._expectEventInstruction(instr)
       return (
-        expectEvent &&
-        expectEvent.eventName == detectEvent.eventName &&
+        instr.eventName == instr.eventName &&
         !fulfilledIndicies.has(instr.index)
       )
     })
@@ -876,9 +873,7 @@ class InstructionsManager {
     fulfilledIndicies.add(unfulfilledExp.index)
     const nextFulfilledExpectation = expectEventInstrs.find((instr) => {
       return (
-        fulfilledIndicies.has(instr.index) &&
-        this._expectEventInstruction(instr) &&
-        unfulfilledExp.index < instr.index
+        fulfilledIndicies.has(instr.index) && unfulfilledExp.index < instr.index
       )
     })
 
@@ -894,17 +889,6 @@ class InstructionsManager {
     return {
       success: true,
       message: `${unfulfilledExp.functionName}("${unfulfilledExp.eventName}"`,
-    }
-  }
-
-  static _expectEventInstruction<T extends Instruction>(instruction: T) {
-    if (
-      instruction.functionName === 'expectEvent' ||
-      instruction.functionName === 'expectEventW'
-    ) {
-      return instruction as T & {
-        functionName: 'expectEvent' | 'expectEventW'
-      }
     }
   }
 
