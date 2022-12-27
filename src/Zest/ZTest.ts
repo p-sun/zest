@@ -30,7 +30,7 @@ export interface ZTestsStore {
   setCurrentTest(testName: string): ZTest | undefined
   getCurrentTest(): ZTest | undefined
 
-  finishFrame(): ZTestResult | null
+  updateFrame(): ZTestResult | null
 
   getTestResult(testName: string): ZTestResult | undefined
   addCurrentResultListener(
@@ -61,7 +61,7 @@ export interface ZTest {
   expectNotEmpty(key: string, value: string | number | Vec3): void
   expectNotEmptyW(key: string, value: string | number | Vec3): void
 
-  finishFrame(): ZTestResult | null
+  updateFrame(): ZTestResult | null
 
   finishTest(): ZTestResult
   finishTestWithDelay(
@@ -168,10 +168,10 @@ export class ZTestsStoreImpl implements ZTestsStore {
 
   /* -------------------------------- Lifecycle ------------------------------- */
 
-  finishFrame(): ZTestResult | null {
+  updateFrame(): ZTestResult | null {
     let currentResult: ZTestResult | null = null
     for (const [testName, test] of Object.entries(this.tests)) {
-      const testResult = test.finishFrame()
+      const testResult = test.updateFrame()
       if (testResult && testResult.testId === this.currentTestData?.testId) {
         currentResult = testResult
       }
@@ -417,7 +417,7 @@ export class ZTestImpl implements ZTest {
     })
   }
 
-  finishFrame(): ZTestResult | null {
+  updateFrame(): ZTestResult | null {
     this.currentFrame++
     if (this.needsUpdate) {
       return this.sendResultToListeners()

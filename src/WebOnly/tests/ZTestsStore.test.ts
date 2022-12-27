@@ -4,7 +4,7 @@ import {
 } from '../../Zest/ZTest'
 
 describe('Test Zest for trigger enter exit, happy path', () => {
-  it('Only first finishFrame has result', () => {
+  it('Only first updateFrame has result', () => {
     let store = CreateZTestsStore()
     const test = store.startTest('NewTestA')
     let result: ZTestResult | null
@@ -13,25 +13,25 @@ describe('Test Zest for trigger enter exit, happy path', () => {
     test.expectEvent('OnTriggerEnter')
     test.expectEvent('OnTriggerExit')
 
-    result = store.finishFrame()
+    result = store.updateFrame()
     expect(result).not.toBeNull()
 
-    result = store.finishFrame()
+    result = store.updateFrame()
     expect(result).toBeNull()
 
-    result = store.finishFrame()
+    result = store.updateFrame()
     expect(result).toBeNull()
 
     test.detectEvent('OnTriggerEnter')
-    result = store.finishFrame()
+    result = store.updateFrame()
     expect(result).not.toBeNull()
 
     test.detectEvent('OnTriggerExit')
 
-    result = store.finishFrame()
+    result = store.updateFrame()
     expect(result).not.toBeNull()
 
-    result = store.finishFrame()
+    result = store.updateFrame()
     expect(result).toBeNull()
   })
 })
@@ -45,13 +45,13 @@ describe('Test Zest for trigger enter exit, missing trigger enter', () => {
 
     test.expectEvent('OnTriggerEnter')
     test.expectEvent('OnTriggerExit')
-    result = store.finishFrame()
+    result = store.updateFrame()
 
     test.detectEvent('OnTriggerExit')
-    result = store.finishFrame()
+    result = store.updateFrame()
     expect(result).not.toBeNull()
 
-    result = store.finishFrame()
+    result = store.updateFrame()
     expect(result).toBeNull()
   })
 })
@@ -84,7 +84,7 @@ describe('Test update results for current test', () => {
     })
     testB.expectEvent('OnCollision')
 
-    result = store.finishFrame()
+    result = store.updateFrame()
 
     expect(countA).toBe(1)
     expect(countB).toBe(1)
@@ -92,7 +92,7 @@ describe('Test update results for current test', () => {
     expect(countAll).toBe(2) // One for each test
 
     testB.expectEvent('OnCollision')
-    result = store.finishFrame()
+    result = store.updateFrame()
 
     expect(countA).toBe(1)
     expect(countB).toBe(2)
@@ -100,7 +100,7 @@ describe('Test update results for current test', () => {
     expect(countAll).toBe(3)
 
     testA.expectEvent('OnTriggerEnter')
-    result = store.finishFrame()
+    result = store.updateFrame()
 
     expect(countA).toBe(2)
     expect(countB).toBe(2)
@@ -109,7 +109,7 @@ describe('Test update results for current test', () => {
 
     store.setCurrentTest('TestB')
     testB.expectEvent('OnCollision')
-    result = store.finishFrame()
+    result = store.updateFrame()
 
     expect(countA).toBe(2)
     expect(countB).toBe(3)
@@ -124,11 +124,11 @@ function testNewTestWithDataAppendsOnly() {
   const test = store.startTest('NewTestA')
   test.appendData('keyA', 'valueA')
   test.appendData('keyB', 'valueB')
-  result = store.finishFrame()
+  result = store.updateFrame()
 
   test.appendData('keyC', 'valueC')
   test.appendData('keyD', 'valueD')
-  result = store.finishFrame()
+  result = store.updateFrame()
 }
 
 function testNewMultiTests_WithDataAppendsOnly() {
@@ -144,13 +144,13 @@ function testNewMultiTests_WithDataAppendsOnly() {
   store.getTest(testB)?.appendData('keyAAA', 'valueBBB')
   store.getTest(testA)?.appendData('keyA', 'valueA')
   store.getTest(testA)?.appendData('keyB', 'valueB')
-  result = store.finishFrame()
+  result = store.updateFrame()
 
   store.getTest(testA)?.appendData('keyC', 'valueC')
   store.getTest(testB)?.appendData('keyCCC', 'valueCCC')
   store.getTest(testA)?.appendData('keyD', 'valueD')
   store.getTest(testB)?.appendData('keyKKK', 'valueKKK')
-  result = store.finishFrame()
+  result = store.updateFrame()
 }
 
 function testNewMultiTests_TestBHasOnlyOneFrame() {
@@ -165,15 +165,15 @@ function testNewMultiTests_TestBHasOnlyOneFrame() {
   store.startTest(testB)
 
   store.getTest(testA)?.appendData('keyA', 'valueA')
-  result = store.finishFrame()
+  result = store.updateFrame()
 
   // testB only has one event, so it only displays FIRST FRAME
   store.getTest(testB)?.appendData('keyKKK', 'valueKKK')
   store.getTest(testA)?.appendData('keyD', 'valueD')
-  result = store.finishFrame()
+  result = store.updateFrame()
 
   // Finishing another frame doesn't change testA and testB results
-  result = store.finishFrame()
+  result = store.updateFrame()
 
   // Display results from any previous test
   result = store.getTestResult('NewTestA')
@@ -186,5 +186,5 @@ function testEmptyStartTest() {
 
   const test = 'NewEmptyTest'
   store.startTest(test)
-  result = store.finishFrame()
+  result = store.updateFrame()
 }

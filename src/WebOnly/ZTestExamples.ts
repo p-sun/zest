@@ -19,7 +19,7 @@ export type JestTestConfig = {
 }
 
 export const allJestConfigs = {
-  testFinishFrameWDelay_triggerEnterExit_happyPath: {
+  testUpdateFrameWDelay_triggerEnterExit_happyPath: {
     describe: 'Test Zest for trigger enter exit, happy path',
     it: 'Should succeed test',
     runZestTest: (test: ZTest, runJest: boolean) => {
@@ -32,15 +32,15 @@ export const allJestConfigs = {
 
       test.expectEvent('TriggerEnter')
       test.expectEvent('TriggerExit')
-      result = test.finishFrame()
+      result = test.updateFrame()
 
       test.detectEvent('TriggerEnter')
       test.detectEvent('TriggerExit')
-      result = test.finishFrame()
+      result = test.updateFrame()
     },
   },
 
-  testFinishFrameWDelay_triggerEnterExit_missingEnter: {
+  testFinishTestWDelay_triggerEnterExit_missingEnter: {
     describe: 'Test Zest for trigger enter exit, missing trigger ENTER',
     it: 'Should fail test',
     runZestTest: (test: ZTest, runJest: boolean) => {
@@ -53,18 +53,18 @@ export const allJestConfigs = {
 
       test.expectEvent('TriggerEnter')
       test.expectEvent('TriggerExit')
-      result = test.finishFrame()
+      result = test.updateFrame()
 
       test.detectEvent('TriggerExit')
-      result = test.finishFrame()
-      result = test.finishFrame()
+      result = test.updateFrame()
+      result = test.updateFrame()
       if (runJest) {
         expect(result).not.toBeUndefined()
       }
     },
   },
 
-  testFinishFrameWDelay_triggerEnterExit_missingExit: {
+  testUpdateFrameWDelay_triggerEnterExit_missingExit: {
     describe: 'Test Zest for trigger enter exit, missing trigger EXIT',
     it: 'Should fail test',
     runZestTest: (test: ZTest, runJest: boolean) => {
@@ -93,12 +93,12 @@ export const allJestConfigs = {
       test.expectEvent('TriggerEnter')
       test.expectEvent('TriggerExit')
 
-      result = test.finishFrame()
-      result = test.finishFrame()
-      result = test.finishFrame()
+      result = test.updateFrame()
+      result = test.updateFrame()
+      result = test.updateFrame()
 
       test.detectEvent('TriggerEnter')
-      result = test.finishFrame()
+      result = test.updateFrame()
 
       if (runJest) {
         expect(result).not.toBeFalsy()
@@ -116,12 +116,12 @@ export const allJestConfigs = {
       test.appendData('myKey1', 'myValue1')
       test.detectEvent('A')
       test.appendData('myKey2', 'myValue2')
-      test.finishFrame()
+      test.updateFrame()
 
       test.appendData('String1')
       test.appendData('String1', 'String2')
       test.appendData('String2 should be empty', '')
-      test.finishFrame()
+      test.updateFrame()
 
       test.finishTest()
     },
@@ -131,15 +131,15 @@ export const allJestConfigs = {
     describe: 'when expecting keys',
     it: 'should evaluate correctly data',
     runZestTest: (test: ZTest, runJest: boolean) => {
-      test.finishFrame()
+      test.updateFrame()
 
       test.expectEqual('myKey', 'myStringA', 'myStringA')
       test.expectEqual('myKey', 'myStringA', 'myStringB')
-      test.finishFrame()
+      test.updateFrame()
 
       test.expectNotEqual('myKey', 'myStringA', 'myStringA')
       test.expectNotEqual('myKey', 'myStringA', 'myStringB')
-      test.finishFrame()
+      test.updateFrame()
     },
   },
 
@@ -147,19 +147,19 @@ export const allJestConfigs = {
     describe: 'when expecting keys',
     it: 'should evaluate correctly data',
     runZestTest: (test: ZTest, runJest: boolean) => {
-      test.finishFrame()
+      test.updateFrame()
 
       test.expectNotEmpty('notZeroNumKey', 99)
       test.expectNotEmpty('zeroNumKey', 0)
       test.expectNotEmptyW('notZeroVecKey', 99)
       test.expectNotEmptyW('zeroNumKey', 0)
-      test.finishFrame()
+      test.updateFrame()
 
       test.expectNotEmpty('notZeroVecKey', new Vec3(8, 2, 1))
       test.expectNotEmpty('zeroVecKey', Vec3.zero)
       test.expectNotEmptyW('notZeroVecKey', new Vec3(8, 2, 1))
       test.expectNotEmptyW('zeroVecKey', Vec3.zero)
-      test.finishFrame()
+      test.updateFrame()
 
       test.expectNotEmpty('notZeroKey', 'notZeroStr')
       test.expectNotEmpty('zeroStrKey', '0')
@@ -167,7 +167,7 @@ export const allJestConfigs = {
       test.expectNotEmptyW('notZeroKey', 'notZeroStr')
       test.expectNotEmptyW('zeroStrKey', '0')
       test.expectNotEmptyW('emptyStrKey', '')
-      test.finishFrame()
+      test.updateFrame()
     },
   },
 
@@ -175,20 +175,20 @@ export const allJestConfigs = {
     describe: 'when expecting keys with only warns',
     it: 'should result in passStatus of WARN',
     runZestTest: (test: ZTest, runJest: boolean) => {
-      test.finishFrame()
+      test.updateFrame()
 
       test.expectNotEmptyW('notZeroVecKey', 99)
       test.expectNotEmptyW('zeroNumKey', 0)
-      test.finishFrame()
+      test.updateFrame()
 
       test.expectNotEmptyW('notZeroVecKey', new Vec3(8, 2, 1))
       test.expectNotEmptyW('zeroVecKey', Vec3.zero)
-      test.finishFrame()
+      test.updateFrame()
 
       test.expectNotEmptyW('notZeroKey', 'notZeroStr')
       test.expectNotEmptyW('zeroStrKey', '0')
       test.expectNotEmptyW('emptyStrKey', '')
-      test.finishFrame()
+      test.updateFrame()
     },
   },
 
@@ -199,7 +199,7 @@ export const allJestConfigs = {
       test.detectEvent('A')
       test.detectEvent('B')
       test.detectEvent('C')
-      test.finishFrame()
+      test.updateFrame()
     },
   },
 
@@ -223,7 +223,7 @@ export const allJestConfigs = {
       test.detectEvent('A')
       test.detectEvent('B')
 
-      test.finishFrame()
+      test.updateFrame()
     },
   },
 
@@ -352,7 +352,7 @@ export const allJestConfigs = {
   },
 
   testUpdateResult_onEmptyTest: {
-    describe: 'when finishFrame() on an empty test',
+    describe: 'when updateFrame() on an empty test',
     it: 'should return TestResults on next frame, and status RUNNING',
     runZestTest: (test: ZTest, runJest: boolean) => {
       let count = 0
@@ -365,7 +365,7 @@ export const allJestConfigs = {
         expect(count).toBe(0)
       }
 
-      result = test.finishFrame()
+      result = test.updateFrame()
       if (runJest) {
         expect(result).not.toBeNull()
 
@@ -373,7 +373,7 @@ export const allJestConfigs = {
         expect(count).toBe(1)
       }
 
-      result = test.finishFrame()
+      result = test.updateFrame()
       if (runJest) {
         expect(result).toBeNull()
         expect(count).toBe(1)
@@ -398,8 +398,8 @@ export const allJestConfigs = {
     },
   },
 
-  testUpdateResult_onFinishFrame: {
-    describe: 'when finishFrame()',
+  testUpdateResult_onUpdateFrame: {
+    describe: 'when updateFrame()',
     it: 'should not return TestResults when an update is not needed.',
     runZestTest: (test: ZTest, runJest: boolean) => {
       let count = 0
@@ -411,28 +411,28 @@ export const allJestConfigs = {
       test.expectEvent('B')
       test.detectEvent('A')
       test.detectEvent('B')
-      result = test.finishFrame()
+      result = test.updateFrame()
       if (runJest) {
         expect(result).not.toBeNull()
       }
 
-      result = test.finishFrame()
+      result = test.updateFrame()
       if (runJest) {
         expect(result).toBeNull()
       }
 
-      result = test.finishFrame()
+      result = test.updateFrame()
       if (runJest) {
         expect(result).toBeNull()
       }
 
       test.expectEvent('C')
       test.detectEvent('C')
-      result = test.finishFrame()
+      result = test.updateFrame()
       if (runJest) {
         expect(result).not.toBeNull()
       }
-      result = test.finishFrame()
+      result = test.updateFrame()
       if (runJest) {
         expect(result).toBeNull()
       }
@@ -457,7 +457,7 @@ export const allJestConfigs = {
       test.expectEvent('Collision')
       test.detectEvent('Collision')
 
-      result = test.finishFrame()
+      result = test.updateFrame()
     },
   },
 
@@ -478,9 +478,9 @@ export const allJestConfigs = {
       test.detectEvent('Collision')
       test.detectEvent('Collision')
 
-      result = test.finishFrame()
-      result = test.finishFrame()
-      result = test.finishFrame()
+      result = test.updateFrame()
+      result = test.updateFrame()
+      result = test.updateFrame()
 
       test.detectEvent('CollisionInfo')
       test.detectEvent('CollisionInfo')
@@ -489,12 +489,12 @@ export const allJestConfigs = {
       test.expectEvent('CollisionInfo')
       test.expectEvent('CollisionInfo')
       test.expectEvent('CollisionInfo')
-      result = test.finishFrame()
+      result = test.updateFrame()
 
       test.expectEvent('CollisionInfo')
       test.expectEvent('CollisionInfo')
 
-      result = test.finishFrame()
+      result = test.updateFrame()
     },
   },
 
@@ -514,9 +514,9 @@ export const allJestConfigs = {
       test.detectEventW('Collision')
       test.detectEventW('Collision')
 
-      result = test.finishFrame()
-      result = test.finishFrame()
-      result = test.finishFrame()
+      result = test.updateFrame()
+      result = test.updateFrame()
+      result = test.updateFrame()
 
       test.detectEventW('CollisionInfo')
       test.detectEventW('CollisionInfo')
@@ -525,17 +525,17 @@ export const allJestConfigs = {
       test.expectEventW('CollisionInfo')
       test.expectEventW('CollisionInfo')
       test.expectEventW('CollisionInfo')
-      result = test.finishFrame()
+      result = test.updateFrame()
 
       test.expectEventW('CollisionInfo')
 
-      result = test.finishFrame()
+      result = test.updateFrame()
       test.expectEventW('Collision')
       test.detectEventW('Collision')
       test.detectEventW('Collision')
       test.detectEventW('Collision')
       test.detectEventW('Collision')
-      result = test.finishFrame()
+      result = test.updateFrame()
       if (runJest) {
         expect(result?.status.passStatus).toBe('WARN')
       }
@@ -564,11 +564,11 @@ export const allJestConfigs = {
       test.expectEvent('Collision')
       test.expectEvent('Collision')
 
-      test.finishFrame()
+      test.updateFrame()
     },
   },
 
-  testFinishFrameWDelay_cancelTest: {
+  testUpdateFrameWDelay_cancelTest: {
     describe: 'Test Zest for canceling all ongoing listeners',
     it: "Should have status CANCEL, and shouldn't display async finishEvent",
     runZestTest: (test: ZTest, runJest: boolean) => {
@@ -579,17 +579,17 @@ export const allJestConfigs = {
       let result: ZTestResult | null
       test.finishTestWithDelay(1, setTimeout)
       test.expectEvent('TriggerEnter')
-      result = test.finishFrame()
+      result = test.updateFrame()
 
       test.cancelTest()
-      result = test.finishFrame()
+      result = test.updateFrame()
 
       test.expectEvent('TriggerExit')
-      result = test.finishFrame()
+      result = test.updateFrame()
     },
   },
 
-  testFinishFrameWDelay_invalidateTest: {
+  testUpdateFrameWDelay_invalidateTest: {
     describe: 'Test Zest for canceling all ongoing listeners',
     it: "Should have status INVALID, and shouldn't display async finishEvent",
     runZestTest: (test: ZTest, runJest: boolean) => {
@@ -600,13 +600,13 @@ export const allJestConfigs = {
       let result: ZTestResult | null
       test.finishTestWithDelay(1, setTimeout)
       test.expectEvent('TriggerEnter')
-      result = test.finishFrame()
+      result = test.updateFrame()
 
       test.invalidateTest('Reason for invalidation')
-      result = test.finishFrame()
+      result = test.updateFrame()
 
       test.expectEvent('TriggerExit')
-      result = test.finishFrame()
+      result = test.updateFrame()
     },
   },
 }
