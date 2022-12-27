@@ -536,6 +536,11 @@ type InstructionsAcc = {
 
 type ExpectEventInstruction = Instruction & {
   functionName: 'expectEvent' | 'expectEventW'
+  index: number
+}
+
+type InstructionWithIndex = Instruction & {
+  index: number
 }
 
 class InstructionsManager {
@@ -604,12 +609,18 @@ class InstructionsManager {
       fulfilledIndicies: new Set<number>(),
     }
 
-    const expectedEvents = instructions.filter(
-      (e) =>
-        e.functionName === 'expectEvent' || e.functionName === 'expectEventW'
-    ) as ExpectEventInstruction[]
+    const instructionsWithIndex = instructions.map((instr, index) => {
+      return { ...instr, index, wasProcessed: false }
+    })
+
+    const expectedEvents = instructionsWithIndex.filter(
+      (instr) =>
+        instr.functionName === 'expectEvent' ||
+        instr.functionName === 'expectEventW'
+    ) as (ExpectEventInstruction & { index: number })[]
+
     let lines: Line[] = []
-    instructions.forEach((instr) => {
+    instructionsWithIndex.forEach((instr) => {
       if (currentFrame !== instr.frame) {
         currentFrame = instr.frame
         const maybeBreak = currentFrame !== 0 ? '<br>' : ''
@@ -645,8 +656,8 @@ class InstructionsManager {
   }
 
   private static *parseLinesForInstruction(
-    instr: Instruction,
-    expectedEventInstrs: ExpectEventInstruction[],
+    instr: InstructionWithIndex,
+    expectEventInstrs: ExpectEventInstruction[],
     acc: InstructionsAcc
   ): Generator<Line, void, unknown> {
     switch (instr.functionName) {
@@ -670,7 +681,7 @@ class InstructionsManager {
         const { success, message } = this._evaluateStartEvent(
           instr,
           acc.fulfilledIndicies,
-          expectedEventInstrs
+          expectEventInstrs
         )
         if (success) {
           yield {
@@ -691,7 +702,7 @@ class InstructionsManager {
           }
 
           acc.status = this._newStatusForFailedLine(
-            true,
+            false,
             instr.isWarn,
             acc.status
           )
@@ -717,9 +728,9 @@ class InstructionsManager {
             color: 'default',
           }
         }
-        const unreceivedEvents = expectedEventInstrs.filter((instr, i) => {
+        const unreceivedEvents = expectEventInstrs.filter((instr) => {
           const expectEventInstr = this._expectEventInstruction(instr)
-          return expectEventInstr && !acc.fulfilledIndicies.has(i)
+          return expectEventInstr && !acc.fulfilledIndicies.has(instr.index)
         }) as ExpectEventInstruction[]
         if (!acc.status.done && unreceivedEvents.length > 0) {
           yield {
@@ -836,70 +847,64 @@ class InstructionsManager {
              ^ *   ^ 
   */
   static _evaluateStartEvent(
-    startEvent: Instruction & {
+    startEvent: InstructionWithIndex & {
       functionName: 'startEvent' | 'startEventW'
     },
     fulfilledIndicies: Set<number>,
-    expectEventInstrs: ExpectEventInstruction[]
+    expectEventInstrs: ExpectEventInstruction[] // All expectations before and after startEvent
   ): {
     success: boolean
     message: string
   } {
-    const currentExpIndex = expectEventInstrs.findIndex((instr, i) => {
+    const unfulfilledExp = expectEventInstrs.find((instr) => {
       const expectEvent = this._expectEventInstruction(instr)
       return (
         expectEvent &&
         expectEvent.eventName == startEvent.eventName &&
-        !fulfilledIndicies.has(i)
+        !fulfilledIndicies.has(instr.index)
       )
     })
-    fulfilledIndicies.add(currentExpIndex)
-
-    const currentExp = expectEventInstrs[
-      currentExpIndex
-    ] as ExpectEventInstruction
-    if (currentExpIndex == -1) {
+    if (!unfulfilledExp || startEvent.index < unfulfilledExp.index) {
+      // SEARCH 1: Is next unfullfilled expectation with same eventName
+      // as startEvent() AFTER startEvent? (bad case)
       return {
         success: false,
         message: `No expectEvent("${startEvent.eventName}") before startEvent().`,
       }
     }
 
-    if (currentExpIndex < expectEventInstrs.length - 1) {
-      // All instructions after current index
-      const instructionsAfterCurrent = expectEventInstrs.slice(
-        currentExpIndex + 1
+    fulfilledIndicies.add(unfulfilledExp.index)
+    const nextFulfilledExpectation = expectEventInstrs.find((instr) => {
+      return (
+        fulfilledIndicies.has(instr.index) &&
+        this._expectEventInstruction(instr) &&
+        unfulfilledExp.index < instr.index
       )
-      const nextFulfilledExpectation = instructionsAfterCurrent.find(
-        (instr, i) => {
-          return (
-            fulfilledIndicies.has(currentExpIndex + 1 + i) &&
-            this._expectEventInstruction(instr)
-          )
-        }
-      ) as ExpectEventInstruction | undefined
+    })
 
-      if (nextFulfilledExpectation) {
-        return {
-          success: false,
-          message: `"${startEvent.eventName}" is expected before "${nextFulfilledExpectation.eventName}"`,
-        }
+    if (nextFulfilledExpectation) {
+      // SEARCH 2: Given there the unfulfilledExp is BEFORE startEvent,
+      // is there another expectation that has been fulfilled AFTER the current unfulfilledExp? (Bad case)
+      return {
+        success: false,
+        message: `"${startEvent.eventName}" is expected before "${nextFulfilledExpectation.eventName}"`,
       }
     }
+
     return {
       success: true,
-      message: `${currentExp.functionName}("${currentExp.eventName}"`,
+      message: `${unfulfilledExp.functionName}("${unfulfilledExp.eventName}"`,
     }
   }
 
-  static _expectEventInstruction(
-    instruction: Instruction
-  ): ExpectEventInstruction | undefined {
+  static _expectEventInstruction<T extends Instruction>(instruction: T) {
     if (
       instruction.functionName === 'expectEvent' ||
       instruction.functionName === 'expectEventW'
     ) {
-      return instruction
+      return instruction as T & {
+        functionName: 'expectEvent' | 'expectEventW'
+      }
     }
   }
 

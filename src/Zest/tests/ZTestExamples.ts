@@ -179,7 +179,7 @@ export const allJestConfigs = {
     },
   },
 
-  testExpectEvent_3startEvent_noExpects: {
+  testExpectEvent_expectNothing_startABC: {
     describe: 'when receiving 3 events, with no expectations',
     it: 'should fail 3 events',
     runZestTest: (test: ZTest, runJest: boolean) => {
@@ -190,7 +190,7 @@ export const allJestConfigs = {
     },
   },
 
-  testExpectEvent_3expects_noStartEvents: {
+  testExpectEvent_expectABC_startNothing: {
     describe: 'when receiving 3 events, with no expectations',
     it: 'should fail 3 events',
     runZestTest: (test: ZTest, runJest: boolean) => {
@@ -202,7 +202,19 @@ export const allJestConfigs = {
     },
   },
 
-  testExpectEvent_expectAB_gotEventAB: {
+  testExpectEvent_expectA_gotAB: {
+    describe: 'when expect A, get AB',
+    it: 'should fail when second event is received',
+    runZestTest: (test: ZTest, runJest: boolean) => {
+      test.expectEvent('myEventA')
+      test.startEvent('myEventA')
+      test.startEvent('myEventB')
+
+      test.finishFrame()
+    },
+  },
+
+  testExpectEvent_expectAB_gotAB: {
     describe: 'when expecting event A-B, and recieving event A-B',
     it: 'should pass both events',
     runZestTest: (test: ZTest, runJest: boolean) => {
@@ -215,7 +227,34 @@ export const allJestConfigs = {
     },
   },
 
-  testExpectEvent_expectAA_gotEventAA: {
+  testExpectEvent_expectAB_gotBA: {
+    describe: 'when expecting event A-B, and recieving event A-B',
+    it: 'should pass B and fail A',
+    runZestTest: (test: ZTest, runJest: boolean) => {
+      test.expectEvent('myEventA')
+      test.expectEvent('myEventB')
+      test.startEvent('myEventB')
+      test.startEvent('myEventA')
+
+      test.finishTest()
+    },
+  },
+
+  testExpectEvent_expectAB_gotABB: {
+    describe: 'when expecting event A-B, and recieving event A-B',
+    it: 'should pass AB, fail the second B',
+    runZestTest: (test: ZTest, runJest: boolean) => {
+      test.expectEvent('myEventA')
+      test.expectEvent('myEventB')
+      test.startEvent('myEventA')
+      test.startEvent('myEventB')
+      test.startEvent('myEventB')
+
+      test.finishTest()
+    },
+  },
+
+  testExpectEvent_expectAA_gotAA: {
     describe: 'when expecting event A-B, and recieving event A-B',
     it: 'should pass both events',
     runZestTest: (test: ZTest, runJest: boolean) => {
@@ -228,7 +267,7 @@ export const allJestConfigs = {
     },
   },
 
-  testExpectEvent_expectAB_gotEventCD: {
+  testExpectEvent_expectAB_gotCD: {
     describe: 'when expecting event A-B, and recieving event C-D',
     it: 'should pass events',
     runZestTest: (test: ZTest, runJest: boolean) => {
@@ -240,7 +279,8 @@ export const allJestConfigs = {
       test.finishTest()
     },
   },
-  testExpectEvent_expectABC_getAB: {
+
+  testExpectEvent_expectABC_gotAB: {
     describe: 'when expecting events A-B-C, but only got A-B',
     it: 'should fail on startEvent B',
     runZestTest: (test: ZTest, runJest: boolean) => {
@@ -255,7 +295,7 @@ export const allJestConfigs = {
     },
   },
 
-  testExpectEvent_expectABC_getAC: {
+  testExpectEvent_expectABC_gotAC: {
     describe: 'when expecting events A-B-C, but only got A-C',
     it: 'should fail on startEvent B',
     runZestTest: (test: ZTest, runJest: boolean) => {
@@ -270,7 +310,7 @@ export const allJestConfigs = {
     },
   },
 
-  testExpectEvent_expectABC_getAC_diffOrder: {
+  testExpectEvent_expectABC_gotAC_diffOrder: {
     describe: 'when expecting events A-B-C, but only got A-C, with diff order',
     it: 'should fail on startEvent B',
     runZestTest: (test: ZTest, runJest: boolean) => {
@@ -286,57 +326,15 @@ export const allJestConfigs = {
     },
   },
 
-  testExpectEvent_expectBeforeStartEvent: {
-    describe: 'when expecting 1 event, but get 2 in one frame',
-    it: 'should fail when second event is received',
-    runZestTest: (test: ZTest, runJest: boolean) => {
-      test.expectEvent('myEventA')
-      test.startEvent('myEventA')
-      test.startEvent('myEventB')
-
-      test.finishFrame()
-    },
-  },
-
-  testExpectEvent_expectBeforeStartEvent_newFrame: {
-    describe: 'when expectEvent is on frame 0, and startEvent on frame 2 & 3',
-    it: 'should fail both startEvents on frame 2 & 3',
-    runZestTest: (test: ZTest, runJest: boolean) => {
-      test.expectEvent('myEventA')
-      test.finishFrame() // Finish frame 1
-
-      test.finishFrame() // Finish frame 2
-
-      test.startEvent('myEventA')
-      test.finishFrame() // Finish frame 3
-
-      test.startEvent('myEventB')
-      test.finishFrame()
-    },
-  },
-
-  testExpectEvent_expectAfterStartEvent: {
-    describe: 'when expectEvent is after 2 startEvents',
-    it: 'should fail both startEvents',
+  testFinishTest_startAB_expectAC: {
+    describe: 'when start AB, get A',
+    it: 'should fail both start events',
     runZestTest: (test: ZTest, runJest: boolean) => {
       test.startEvent('myEventA')
       test.startEvent('myEventB')
       test.expectEvent('myEventA')
-      test.finishFrame()
-    },
-  },
-
-  testExpectEvent_finishTest_newFrame: {
-    describe: 'when finishTest is called with unfinished expects on frame 3',
-    it: 'should fail expectations on frame 3',
-    runZestTest: (test: ZTest, runJest: boolean) => {
-      test.expectEvent('myEventA')
-      test.expectEvent('myEventB')
-      test.finishFrame() // finish frame 0
-      test.finishFrame() // finish frame 1
-      test.finishFrame() // finish frame 2
-
-      test.finishTest() // on frame 3
+      test.expectEvent('myEventC')
+      test.finishTest()
     },
   },
 
@@ -431,6 +429,7 @@ export const allJestConfigs = {
       }
     },
   },
+
   testCombo_collisions_pass: {
     describe: 'Test Zest for collisions',
     it: 'Should pass test',
@@ -486,30 +485,6 @@ export const allJestConfigs = {
     },
   },
 
-  testMultipleExpectEvents_waitingOnExpectEvents: {
-    describe: 'Test Zest for multiple expects in a row',
-    it: 'Should display that lines repeated 3, 2, 4 times',
-    runZestTest: (test: ZTest, runJest: boolean) => {
-      if (runJest) {
-        jest.useFakeTimers()
-      }
-
-      let result: ZTestResult | null
-      test.finishTestWithDelay(0.8, setTimeout)
-      test.expectEvent('Collision')
-      test.expectEvent('Collision')
-      test.expectEvent('Collision')
-
-      test.expectEvent('CollisionInfo')
-      test.expectEvent('CollisionInfo')
-
-      test.expectEvent('Collision')
-      test.expectEvent('Collision')
-      test.expectEvent('Collision')
-      test.expectEvent('Collision')
-    },
-  },
-
   testCombo_collisions_multipleEventsWarn: {
     describe: 'Test Zest for warnings per frame',
     it: 'Should have status of WARN',
@@ -551,6 +526,30 @@ export const allJestConfigs = {
       if (runJest) {
         expect(result?.status.passStatus).toBe('WARN')
       }
+    },
+  },
+
+  testMultipleExpectEvents_waitingOnExpectEvents: {
+    describe: 'Test Zest for multiple expects in a row',
+    it: 'Should display that lines repeated 3, 2, 4 times',
+    runZestTest: (test: ZTest, runJest: boolean) => {
+      if (runJest) {
+        jest.useFakeTimers()
+      }
+
+      let result: ZTestResult | null
+      test.finishTestWithDelay(0.8, setTimeout)
+      test.expectEvent('Collision')
+      test.expectEvent('Collision')
+      test.expectEvent('Collision')
+
+      test.expectEvent('CollisionInfo')
+      test.expectEvent('CollisionInfo')
+
+      test.expectEvent('Collision')
+      test.expectEvent('Collision')
+      test.expectEvent('Collision')
+      test.expectEvent('Collision')
     },
   },
 
