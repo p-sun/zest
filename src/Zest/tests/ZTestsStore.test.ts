@@ -152,7 +152,7 @@ function testNewMultiTests_WithDataAppendsOnly() {
 
 function testNewMultiTests_TestBHasOnlyOneFrame() {
   let store = CreateZTestsStore()
-  let result: ZTestResult | null
+  let result: ZTestResult | null | undefined
 
   const testA = 'NewTestA'
   const testB = 'NewTestB'
@@ -173,8 +173,8 @@ function testNewMultiTests_TestBHasOnlyOneFrame() {
   result = store.finishFrame()
 
   // Display results from any previous test
-  // // displayTextOnHTML(store.getTestResults(testA)!)
-  // // displayTextOnHTML(store.getTestResults(testB)!)
+  result = store.getTestResult('NewTestA')
+  result = store.getTestResult('NewTestB')
 }
 
 function testEmptyStartTest() {

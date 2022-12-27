@@ -5,7 +5,12 @@ import {
   CellPositionForIndex,
   CharForPassStatus,
 } from '../HorizonUtils/GridData'
-import { ZTest, ZTestResult, ZTestsStoreImpl } from '../Zest/ZTest'
+import {
+  CreateZTestsStore,
+  ZTest,
+  ZTestResult,
+  ZTestsStore,
+} from '../Zest/ZTest'
 import {
   JestTestName,
   allJestConfigs,
@@ -19,8 +24,7 @@ type WebMainUpdateListener = (
 
 export class WebMain {
   private readonly localStorageKey = 'currentName'
-  private store = new ZTestsStoreImpl()
-  private updateListener: WebMainUpdateListener | undefined
+  private store: ZTestsStore = CreateZTestsStore()
   private runTestFn: ((testName: string, test: ZTest) => void) | undefined
 
   constructor(public gridData: GridData) {}
@@ -37,7 +41,7 @@ export class WebMain {
   }
 
   getCurrentTestName() {
-    return this.store.currentTestData?.testName
+    return this.store.getCurrentTest()?.testName
   }
 
   setTestRunner(runTest: (testName: string, test: ZTest) => void) {
@@ -45,7 +49,6 @@ export class WebMain {
   }
 
   setListener(listener: WebMainUpdateListener) {
-    this.updateListener = listener
     this.store.addResultListener(
       (testResult: ZTestResult, isCurrentTest: boolean) => {
         let char = CharForPassStatus(testResult.status.passStatus)
@@ -67,9 +70,6 @@ export class WebMain {
       const testName = allJestTestNames[index]
       this.gridData.selectCellPosition(newCellPos)
       this.runTestWithName(testName)
-
-      const testResult = this.store.getTest(testName)?.getTestResult()
-      this.updateListener?.(true, testResult)
     }
   }
 
@@ -83,7 +83,6 @@ export class WebMain {
 
     const test = this.store.startTest(testName)
     this.store.setCurrentTest(testName)
-
     this.runTestFn?.(testName, test)
     return test
   }

@@ -43,6 +43,7 @@ export interface ZTestsStore {
 
 export interface ZTest {
   readonly testId: string
+  readonly testName: string
 
   // Warning are post-fixed with 'W',
   // so that this API matches the codeblocks API
@@ -122,7 +123,7 @@ type ZTestStoreListener = (
 
 export class ZTestsStoreImpl implements ZTestsStore {
   private tests: { [testName: string]: ZTest } = {}
-  currentTestData?: CurrentTestData
+  private currentTestData?: CurrentTestData
   private resultListeners: ZTestStoreListener[] = []
   private currentResultListeners: ((testResult: ZTestResult) => void)[] = []
 
@@ -243,6 +244,7 @@ type Line = { text: string; color: LineColor }
 
 export class ZTestImpl implements ZTest {
   readonly testId: string
+  readonly testName: string
   private needsUpdate = true
   private isCancelled = false
   private currentFrame = 0
@@ -251,6 +253,7 @@ export class ZTestImpl implements ZTest {
 
   constructor(testName: string) {
     this.testId = String(Math.random()) + Math.random()
+    this.testName = testName
     this.instructionsMgr = new InstructionsManager(testName)
     this.instructionsMgr.push({
       functionName: 'startTest',

@@ -111,6 +111,8 @@ export const allJestConfigs = {
       test.appendData('String1', 'String2')
       test.appendData('String2 should be empty', '')
       test.finishFrame()
+
+      test.finishTest()
     },
   },
 
@@ -340,7 +342,7 @@ export const allJestConfigs = {
 
   testUpdateResult_onEmptyTest: {
     describe: 'when finishFrame() on an empty test',
-    it: 'should return TestResults on next frame',
+    it: 'should return TestResults on next frame, and status RUNNING',
     runZestTest: (test: ZTest, runJest: boolean) => {
       let count = 0
       let result: ZTestResult | null
@@ -370,7 +372,7 @@ export const allJestConfigs = {
 
   testUpdateResult_onEmptyTest_withFinishTest: {
     describe: 'when finishTest() is called on an empty test',
-    it: 'should return TestResults on next frame',
+    it: 'should return TestResults on next frame, and status PASS',
     runZestTest: (test: ZTest, runJest: boolean) => {
       let count = 0
       let result: ZTestResult | null
@@ -531,7 +533,7 @@ export const allJestConfigs = {
 
   testMultipleExpectEvents_waitingOnExpectEvents: {
     describe: 'Test Zest for multiple expects in a row',
-    it: 'Should display that lines repeated 3, 2, 4 times',
+    it: 'Should display repeat 3, 2, 4. Status change from RUNNING to FAIL.',
     runZestTest: (test: ZTest, runJest: boolean) => {
       if (runJest) {
         jest.useFakeTimers()
@@ -550,6 +552,8 @@ export const allJestConfigs = {
       test.expectEvent('Collision')
       test.expectEvent('Collision')
       test.expectEvent('Collision')
+
+      test.finishFrame()
     },
   },
 
