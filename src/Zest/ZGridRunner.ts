@@ -5,14 +5,9 @@ import {
   CellPositionForIndex,
   CharForPassStatus,
 } from '../HorizonUtils/GridData'
-import {
-  CreateZTestsStore,
-  ZTest,
-  ZTestResult,
-  ZTestsStore,
-} from '../Zest/ZTest'
+import { ZTest, ZTestResult, ZTestsStore } from './ZTest'
 
-export interface ZGridRunnerDataSource {
+export interface ZTestRunnerDataSource {
   testNameForIndex(index: number): string | undefined
   indexForTestName(testName: string): number
 }
@@ -23,12 +18,12 @@ type GridRunnerListener = (
 ) => void
 
 export class ZGridTestRunner {
-  private store: ZTestsStore = CreateZTestsStore()
   private runTestFn: ((testName: string, test: ZTest) => void) | undefined
 
   constructor(
     public gridData: GridData,
-    public dataSource: ZGridRunnerDataSource
+    public dataSource: ZTestRunnerDataSource,
+    public store: ZTestsStore
   ) {}
 
   getCurrentTestName() {

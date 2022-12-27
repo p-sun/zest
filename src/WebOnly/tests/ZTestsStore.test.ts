@@ -1,4 +1,7 @@
-import { CreateZTestsStore as CreateZTestsStore, ZTestResult } from '../ZTest'
+import {
+  CreateZTestsStore as CreateZTestsStore,
+  ZTestResult,
+} from '../../Zest/ZTest'
 
 describe('Test Zest for trigger enter exit, happy path', () => {
   it('Only first finishFrame has result', () => {

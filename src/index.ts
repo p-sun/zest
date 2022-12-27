@@ -1,27 +1,19 @@
 import { GridData } from './HorizonUtils/GridData'
 import { updateHTML } from './WebOnly/HtmlDisplay'
-import { ZGridTestRunner, ZGridRunnerDataSource } from './WebOnly/WebMain'
-import { ZTest, ZTestResult } from './Zest/ZTest'
 import {
   allJestConfigs,
   allJestTestNames,
   JestConfigForName,
+  JestTestNameUtils,
   JestTestName,
-} from './Zest/tests/ZTestExamples'
-
-class JestConfigs implements ZGridRunnerDataSource {
-  testNameForIndex(index: number): string | undefined {
-    return allJestTestNames[index]
-  }
-
-  indexForTestName(testName: string): number {
-    return allJestTestNames.indexOf(testName as any)
-  }
-}
+} from './WebOnly/ZTestExamples'
+import { ZGridTestRunner } from './Zest/ZGridRunner'
+import { CreateZTestsStore, ZTest, ZTestResult } from './Zest/ZTest'
 
 const gridRunner = new ZGridTestRunner(
   new GridData({ rowCount: 6, colCount: 6 }),
-  new JestConfigs()
+  new JestTestNameUtils(),
+  CreateZTestsStore()
 )
 exec()
 

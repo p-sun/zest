@@ -1,11 +1,11 @@
 import { GridData } from '../HorizonUtils/GridData'
+import { ZGridTestRunner } from '../Zest/ZGridRunner'
 import { ZTestResult } from '../Zest/ZTest'
 import {
   allJestTestNames,
   JestConfigForName,
   JestTestName,
-} from '../Zest/tests/ZTestExamples'
-import { ZGridTestRunner } from './WebMain'
+} from './ZTestExamples'
 
 export function updateHTML(
   gridRunner: ZGridTestRunner,

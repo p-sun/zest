@@ -1,5 +1,16 @@
-import { Vec3 } from '../../HorizonShim/HZShim'
-import { ZTestResult, ZTest } from '../ZTest'
+import { Vec3 } from '../HorizonShim/HZShim'
+import { ZTestRunnerDataSource } from '../Zest/ZGridRunner'
+import { ZTestResult, ZTest } from '../Zest/ZTest'
+
+export class JestTestNameUtils implements ZTestRunnerDataSource {
+  testNameForIndex(index: number): string | undefined {
+    return allJestTestNames[index]
+  }
+
+  indexForTestName(testName: string): number {
+    return allJestTestNames.indexOf(testName as any)
+  }
+}
 
 export type JestTestConfig = {
   describe: string
