@@ -574,29 +574,18 @@ class InstructionsManager {
       } else if (isLineSameAsPrev) {
         prevLineCount++
       } else {
-        const openingBreak =
-          i === 0 || prevLine.text.endsWith('<br>') ? '' : '<br>'
-        if (prevLineCount > 1) {
-          str += WrapTextWithHorizonColorTags(
-            openingBreak + `Repeated ${prevLineCount}x:`,
-            'grey'
-          )
-        }
-
-        //const endBreak = prevLineCount > 1 && !line.text.startsWith('<br>') ? '<br>' : ''
-        const text = '<br>' + prevLine.text // + endBreak
-        str += WrapTextWithHorizonColorTags(text, prevLine.color)
+        const prevLineStr = prevLineCount > 1 ? ` (${prevLineCount}x)` : ''
+        const text = '<br>' + prevLine.text
+        str += WrapTextWithHorizonColorTags(text + prevLineStr, prevLine.color)
         prevLine = line
         prevLineCount = 1
       }
     })
 
-    if (prevLineCount > 1) {
-      str +=
-        '<br>' +
-        WrapTextWithHorizonColorTags(`Repeated ${prevLineCount}x:`, 'grey')
-    }
-    str += '<br>' + WrapTextWithHorizonColorTags(prevLine.text, prevLine.color)
+    const prevLineStr = prevLineCount > 1 ? ` (${prevLineCount}x)` : ''
+    str +=
+      '<br>' +
+      WrapTextWithHorizonColorTags(prevLine.text + prevLineStr, prevLine.color)
     return { text: str, status: status }
   }
 
