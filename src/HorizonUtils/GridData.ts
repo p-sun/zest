@@ -18,13 +18,13 @@ export function CharLabelForColumn(row: number) {
 /*                           GridData + Zest                                  */
 /* -------------------------------------------------------------------------- */
 
-export function CharForPassStatus(passStatus: string): string | undefined {
+export function CharForPassStatus(passStatus: ZTestStatus['passStatus']) {
   const status = <ZTestStatus['passStatus']>passStatus
   switch (status) {
     case 'RUNNING':
       return '~'
     case 'PASS':
-      return 'O'
+      return '*'
     case 'FAIL':
       return `X`
     case 'WARN':
@@ -86,6 +86,10 @@ export class GridData {
 
   selectCellPosition(cellPos: CellPosition) {
     this.selectedPos = cellPos
+  }
+
+  moveSelectedCellPosIn(direction: Direction) {
+    this.selectedPos = this.cellPosInDirection(direction)
   }
 
   setCharAt(cellPos: CellPosition, char: string) {
