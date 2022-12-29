@@ -574,19 +574,30 @@ class InstructionsManager {
       } else if (isLineSameAsPrev) {
         prevLineCount++
       } else {
-        const prevLineStr = prevLineCount > 1 ? ` (${prevLineCount}x)` : ''
-        const text = '<br>' + prevLine.text
-        str += WrapTextWithHorizonColorTags(text + prevLineStr, prevLine.color)
+        const text = InstructionsManager.insertLineCount(
+          prevLine,
+          prevLineCount
+        )
+        str += '<br>' + WrapTextWithHorizonColorTags(text, prevLine.color)
         prevLine = line
         prevLineCount = 1
       }
     })
 
-    const prevLineStr = prevLineCount > 1 ? ` (${prevLineCount}x)` : ''
-    str +=
-      '<br>' +
-      WrapTextWithHorizonColorTags(prevLine.text + prevLineStr, prevLine.color)
+    const text = InstructionsManager.insertLineCount(prevLine, prevLineCount)
+    str += '<br>' + WrapTextWithHorizonColorTags(text, prevLine.color)
     return { text: str, status: status }
+  }
+
+  private static insertLineCount(line: Line, count: number) {
+    const lineCount = count > 1 ? ` ...(${count}x)` : ''
+    const lines = line.text.split('<br>')
+    return (
+      (lines.shift() ?? '') +
+      lineCount +
+      (lines.length > 0 ? '<br>' : '') +
+      lines.join('<br>')
+    )
   }
 
   /* ------------------------------ Parse Results ----------------------------- */
