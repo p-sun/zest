@@ -1,4 +1,4 @@
-import { Vec3 } from '../HorizonShim/HZShim'
+import { Vec3 } from '../WebOnly/HZShim'
 
 /* -------------------------------------------------------------------------- */
 /*                                  ZTest.ts                                  */
