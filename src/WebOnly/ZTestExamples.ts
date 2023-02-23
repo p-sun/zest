@@ -119,10 +119,17 @@ export const allJestConfigs = {
       test.updateFrame()
 
       test.appendData('String1')
-      test.appendData('String1', 'String2')
-      test.appendData('String2 should be empty', '')
       test.updateFrame()
 
+      /*
+      // This works, but is commented out because CodeBlockEvent
+      // doesn't support method overloading at the moment.
+      test.appendData('String1', 'String2')
+      test.appendData('String2 should be empty', '')
+      test.appendData('String1', 3)
+      test.appendData('String1', new Vec3(3, 6, 8))
+      test.updateFrame()
+      */
       test.finishTest()
     },
   },

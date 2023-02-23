@@ -53,7 +53,7 @@ export interface ZTest {
   detectEvent(eventName: string): void
   detectEventW(eventName: string): void
 
-  appendData(str1: string, str2?: string): void
+  appendData(str1: string, value?: string | number | Vec3): void
 
   expectEqual(key: string, actual: string, expected: string): void
   expectNotEqual(key: string, actual: string, expected: string): void
@@ -306,12 +306,12 @@ export class ZTestImpl implements ZTest {
 
   /* ------------------------------- Append Data ------------------------------ */
 
-  appendData(str1: string, str2?: string) {
+  appendData(str1: string, value?: string | number | Vec3): void {
     this.needsUpdate = true
     this.instructionsMgr.push({
       functionName: 'appendData',
       str1,
-      str2: str2,
+      value,
       frame: this.currentFrame,
     })
   }
@@ -502,7 +502,7 @@ type Instruction = HasFrame &
     | {
         functionName: 'appendData'
         str1: string
-        str2?: string
+        value?: string | number | Vec3
       }
     | {
         functionName: 'expectEqual'
@@ -777,15 +777,22 @@ class InstructionsManager {
         acc.status = { done: true, passStatus: 'INVALID' }
         break
       case 'appendData':
-        if (instr.str2 !== undefined) {
-          yield {
-            text: `appendData("${instr.str1}", "${instr.str2}")`,
-            color: 'default',
-          }
-        } else {
+        if (instr.value === undefined) {
           yield {
             text: `appendData("${instr.str1}")`,
             color: 'default',
+          }
+        } else {
+          if (typeof instr.value === 'string') {
+            yield {
+              text: `appendData("${instr.str1}", "${instr.value}")`,
+              color: 'default',
+            }
+          } else {
+            yield {
+              text: `appendData("${instr.str1}", ${instr.value})`,
+              color: 'default',
+            }
           }
         }
         break
