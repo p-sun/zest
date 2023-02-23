@@ -35,7 +35,7 @@ export function updateHTML(
 function displayGridOn(element: Element, grid: GridData) {
   element.innerHTML = grid.getText(false)
   element.innerHTML += `<br><br><text class='arrowKeysPrompt'>
-    Use the arrow keys to navigate.
+    Use the arrow keys to navigate.<p>Hold R/L arrow to run all tests.
     <text>`
 }
 
