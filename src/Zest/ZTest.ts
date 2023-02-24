@@ -535,28 +535,28 @@ type Instruction = HasFrame &
         key: string
         value: string
         expectedVal: string
-        isWarn: boolean
+        isWarn: false
       }
     | {
         functionName: 'expectEqualW'
         key: string
         value: string
         expectedVal: string
-        isWarn: boolean
+        isWarn: true
       }
     | {
         functionName: 'expectNotEqual'
         key: string
         value: string
         expectedVal: string
-        isWarn: boolean
+        isWarn: false
       }
     | {
         functionName: 'expectNotEqualW'
         key: string
         value: string
         expectedVal: string
-        isWarn: boolean
+        isWarn: true
       }
     | {
         functionName: 'expectNotEmpty'
