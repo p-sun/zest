@@ -663,6 +663,14 @@ class InstructionsManager {
     expectEventInstrs: ExpectEventInstruction[],
     acc: InstructionsAcc
   ): Generator<Line, void, unknown> {
+    if (acc.status.done) {
+      yield {
+        text: `FAIL: Called '${instr.functionName}' after test completed.`,
+        color: 'red',
+      }
+      return
+    }
+
     switch (instr.functionName) {
       case 'startTest':
         yield {
