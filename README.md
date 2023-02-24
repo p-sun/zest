@@ -1,8 +1,14 @@
-# Zest
+# Zest Testing Framework
 
-A Jest-like testing framework for testing lifecycles.
+## Intro Video
 
 [![How to use Zest for Horizon Worlds](https://img.youtube.com/vi/TarGOtVGfqw/0.jpg)](https://www.youtube.com/watch?v=TarGOtVGfqw)
+
+How to use Zest to test Horizon Worlds: [bit.ly/PaigeTestWorlds](https://bit.ly/PaigeTestWorlds).
+
+Use Zest to automate tests: [Zest Testing Framework](https://oculus.com/vr/5606854962743076/)
+
+Use Zest to test collisions: [Collisions Test Grid V3](https://oculus.com/vr/6250571571629414/)
 
 ## What is Zest?
 
@@ -44,3 +50,9 @@ Zest has declarative APIs inspired by Jest and is simplified to work in more lim
 ## How to Contribute
 
 Use `npm start` to run, and `npm test` to validate the Jest tests that tests Zest.
+
+Use `ZTestStore` to setup a collection of Zest tests. Refer to examples from [ZTestsStore.test.ts](https://github.com/p-sun/zest/blob/main/src/WebOnly/tests/ZTestsStore.test.ts).
+
+Use `ZTest` to setup a single Zest test. Refer to examples from [ZTestExamples.ts](https://github.com/p-sun/zest/blob/main/src/WebOnly/ZTestExamples.ts) which are also displayed in the local setup.
+
+![local development setup](./media/ZestWeb.gif)

@@ -705,7 +705,7 @@ class InstructionsManager {
   ): Generator<Line, void, unknown> {
     if (acc.status.done) {
       yield {
-        text: `FAIL: Called '${instr.functionName}' after test completed.`,
+        text: `ERROR: Called '${instr.functionName}' after test completed.`,
         color: 'red',
       }
       return
