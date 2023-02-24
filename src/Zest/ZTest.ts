@@ -57,6 +57,8 @@ export interface ZTest {
 
   expectEqual(key: string, actual: string, expected: string): void
   expectNotEqual(key: string, actual: string, expected: string): void
+  expectEqualW(key: string, actual: string, expected: string): void
+  expectNotEqualW(key: string, actual: string, expected: string): void
 
   expectNotEmpty(key: string, value: string | number | Vec3): void
   expectNotEmptyW(key: string, value: string | number | Vec3): void
@@ -330,6 +332,18 @@ export class ZTestImpl implements ZTest {
     })
   }
 
+  expectEqualW(key: string, value: string, expectedVal: string) {
+    this.needsUpdate = true
+    this.instructionsMgr.push({
+      functionName: 'expectEqualW',
+      key,
+      value,
+      expectedVal,
+      isWarn: true,
+      frame: this.currentFrame,
+    })
+  }
+
   expectNotEqual(key: string, value: string, expectedVal: string) {
     this.needsUpdate = true
     this.instructionsMgr.push({
@@ -338,6 +352,18 @@ export class ZTestImpl implements ZTest {
       value,
       expectedVal,
       isWarn: false,
+      frame: this.currentFrame,
+    })
+  }
+
+  expectNotEqualW(key: string, value: string, expectedVal: string) {
+    this.needsUpdate = true
+    this.instructionsMgr.push({
+      functionName: 'expectNotEqualW',
+      key,
+      value,
+      expectedVal,
+      isWarn: true,
       frame: this.currentFrame,
     })
   }
@@ -512,7 +538,21 @@ type Instruction = HasFrame &
         isWarn: boolean
       }
     | {
+        functionName: 'expectEqualW'
+        key: string
+        value: string
+        expectedVal: string
+        isWarn: boolean
+      }
+    | {
         functionName: 'expectNotEqual'
+        key: string
+        value: string
+        expectedVal: string
+        isWarn: boolean
+      }
+    | {
+        functionName: 'expectNotEqualW'
         key: string
         value: string
         expectedVal: string
@@ -807,6 +847,8 @@ class InstructionsManager {
 
       case 'expectEqual':
       case 'expectNotEqual':
+      case 'expectEqualW':
+      case 'expectNotEqualW':
         const line = this._lineForEquality(instr)
         if (line.color === 'red') {
           acc.status = { done: false, passStatus: 'FAIL' }
@@ -912,12 +954,19 @@ class InstructionsManager {
 
   static _lineForEquality(
     instr: Instruction &
-      ({ functionName: 'expectEqual' } | { functionName: 'expectNotEqual' })
+      (
+        | { functionName: 'expectEqual' }
+        | { functionName: 'expectNotEqual' }
+        | { functionName: 'expectEqualW' }
+        | { functionName: 'expectNotEqualW' }
+      )
   ) {
-    const isExpected =
-      instr.functionName === 'expectEqual'
-        ? instr.value === instr.expectedVal
-        : instr.value !== instr.expectedVal
+    const isExpectedFn =
+      instr.functionName === 'expectEqual' ||
+      instr.functionName === 'expectEqualW'
+    const isExpected = isExpectedFn
+      ? instr.value === instr.expectedVal
+      : instr.value !== instr.expectedVal
     const valueIsStr = typeof instr.value === 'string'
     const valueStr = valueIsStr ? `"${instr.value}"` : `${instr.value}`
     const expValStr = valueIsStr

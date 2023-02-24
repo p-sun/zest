@@ -140,12 +140,20 @@ export const allJestConfigs = {
     runZestTest: (test: ZTest, runJest: boolean) => {
       test.updateFrame()
 
-      test.expectEqual('myKey', 'myStringA', 'myStringA')
-      test.expectEqual('myKey', 'myStringA', 'myStringB')
+      test.expectEqual('myKey', 'A', 'A')
+      test.expectEqual('myKey', 'A', 'B')
       test.updateFrame()
 
-      test.expectNotEqual('myKey', 'myStringA', 'myStringA')
-      test.expectNotEqual('myKey', 'myStringA', 'myStringB')
+      test.expectNotEqual('myKey', 'A', 'A')
+      test.expectNotEqual('myKey', 'A', 'B')
+      test.updateFrame()
+
+      test.expectEqualW('myKey', 'C', 'C')
+      test.expectEqualW('myKey', 'C', 'D')
+      test.updateFrame()
+
+      test.expectNotEqualW('myKey', 'C', 'C')
+      test.expectNotEqualW('myKey', 'C', 'D')
       test.updateFrame()
     },
   },
@@ -577,7 +585,7 @@ export const allJestConfigs = {
 
   testUpdateFrameWDelay_cancelTest: {
     describe: 'Test Zest for canceling all ongoing listeners',
-    it: "Should have status CANCEL, and shouldn't display async finishEvent",
+    it: 'Should have status CANCEL',
     runZestTest: (test: ZTest, runJest: boolean) => {
       if (runJest) {
         jest.useFakeTimers()
@@ -598,7 +606,7 @@ export const allJestConfigs = {
 
   testUpdateFrameWDelay_invalidateTest: {
     describe: 'Test Zest for canceling all ongoing listeners',
-    it: "Should have status INVALID, and shouldn't display async finishEvent",
+    it: 'Should have status INVALID',
     runZestTest: (test: ZTest, runJest: boolean) => {
       if (runJest) {
         jest.useFakeTimers()
